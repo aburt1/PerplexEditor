@@ -1128,197 +1128,310 @@ function waitForKualiForm() {
   });
 }
 
-// Helper function to find the Subject field
+// Helper function to find the Subject field using multiple robust strategies
 function findSubjectField() {
-  console.log('Searching for Subject field...');
+  console.log('Searching for Subject field using robust detection...');
   
-  // Strategy 1: Exact placeholder matches for Email Subject (exclude our injected elements)
+  // Strategy 1: Modern data attributes (most reliable)
+  const dataSelectors = [
+    'input[data-placeholder="Notification subject"]',
+    'input[data-placeholder*="subject"]',
+    'input[data-testid*="subject"]',
+    'input[data-testid*="Subject"]',
+    'input[data-cy*="subject"]',
+    'input[data-automation*="subject"]',
+    'input[data-field*="subject"]',
+    'input[data-name*="subject"]'
+  ];
+  
+  for (const selector of dataSelectors) {
+    const field = document.querySelector(selector);
+    if (field && !isOurInjectedElement(field)) {
+      console.log(`Found subject field using data attribute: ${selector}`);
+      return field;
+    }
+  }
+  
+  // Strategy 2: ARIA attributes (accessibility-first approach)
+  const ariaSelectors = [
+    'input[aria-label*="Email Subject"]',
+    'input[aria-label*="email subject"]',
+    'input[aria-labelledby*="subject"]',
+    'input[aria-describedby*="subject"]'
+  ];
+  
+  for (const selector of ariaSelectors) {
+    const field = document.querySelector(selector);
+    if (field && !isOurInjectedElement(field)) {
+      console.log(`Found subject field using ARIA: ${selector}`);
+      return field;
+    }
+  }
+  
+  // Strategy 3: Form structure analysis - look for consistent patterns
+  const forms = document.querySelectorAll('form, [role="form"], [class*="form"]');
+  for (const form of forms) {
+    // Look for field groups or sections
+    const fieldGroups = form.querySelectorAll('[class*="field"], [class*="input"], [class*="form-group"]');
+    for (const group of fieldGroups) {
+      if (group.textContent && group.textContent.toLowerCase().includes('email subject')) {
+        const input = group.querySelector('input, textarea');
+        if (input && !isOurInjectedElement(input)) {
+          console.log('Found subject field by form structure analysis:', group.textContent.trim());
+          return input;
+        }
+      }
+    }
+  }
+  
+  // Strategy 4: Exact placeholder matches (fallback)
   const exactSelectors = [
     'input[placeholder="Email Subject"]',
     'input[placeholder*="Email Subject"]',
-    'input[placeholder*="email subject"]',
-    'input[placeholder*="EMAIL SUBJECT"]'
+    'input[placeholder*="email subject"]'
   ];
   
   for (const selector of exactSelectors) {
     const field = document.querySelector(selector);
     if (field && !isOurInjectedElement(field)) {
-      console.log(`Found subject field using exact selector: ${selector}`);
+      console.log(`Found subject field using placeholder: ${selector}`);
       return field;
     }
   }
   
-  // Strategy 2: Look for fields with "Email Subject" in any attribute (exclude our elements)
+  // Strategy 5: Smart text search with context validation
   const allInputs = document.querySelectorAll('input, textarea');
   for (const input of allInputs) {
-    // Skip our injected elements
-    if (isOurInjectedElement(input)) {
-      continue;
-    }
+    if (isOurInjectedElement(input)) continue;
     
-    // Check placeholder, name, id, aria-label, title
-    const placeholder = input.placeholder || '';
-    const name = input.name || '';
-    const id = input.id || '';
-    const ariaLabel = input.getAttribute('aria-label') || '';
-    const title = input.title || '';
+    // Check all possible attributes
+    const attributes = {
+      placeholder: input.placeholder || '',
+      name: input.name || '',
+      id: input.id || '',
+      'aria-label': input.getAttribute('aria-label') || '',
+      'aria-labelledby': input.getAttribute('aria-labelledby') || '',
+      title: input.title || '',
+      'data-testid': input.getAttribute('data-testid') || '',
+      'data-cy': input.getAttribute('data-cy') || '',
+      'data-automation': input.getAttribute('data-automation') || ''
+    };
     
-    if (placeholder.toLowerCase().includes('email subject') ||
-        name.toLowerCase().includes('email subject') ||
-        id.toLowerCase().includes('email subject') ||
-        ariaLabel.toLowerCase().includes('email subject') ||
-        title.toLowerCase().includes('email subject')) {
-      console.log(`Found subject field by attribute search:`, { placeholder, name, id, ariaLabel, title });
+    // Check if any attribute contains subject-related text
+    const hasSubject = Object.values(attributes).some(value => 
+      value.toLowerCase().includes('email subject') || 
+      value.toLowerCase().includes('subject')
+    );
+    
+    if (hasSubject) {
+      console.log('Found subject field by attribute analysis:', attributes);
       return input;
     }
   }
   
-  // Strategy 3: Search by nearby text content (exclude our elements)
-  for (const input of allInputs) {
-    // Skip our injected elements
-    if (isOurInjectedElement(input)) {
-      continue;
-    }
-    
-    // Look at parent elements for text content
-    let element = input.parentElement;
-    let depth = 0;
-    while (element && depth < 5) { // Look up to 5 levels up
-      if (element.textContent) {
-        const text = element.textContent.toLowerCase();
-        if (text.includes('email subject') && !text.includes('email notification context')) {
-          console.log(`Found subject field by nearby text (depth ${depth}):`, element.textContent.trim());
-          return input;
-        }
-      }
-      element = element.parentElement;
-      depth++;
-    }
-  }
-  
-  // Strategy 4: Look for labels with "Email Subject" (exclude our elements)
+  // Strategy 6: Label association search
   const labels = document.querySelectorAll('label, span, div');
   for (const label of labels) {
     if (label.textContent && 
         label.textContent.toLowerCase().includes('email subject') && 
         !label.textContent.toLowerCase().includes('email notification context')) {
-      // Find the associated input
+      
+      // Find associated input using multiple methods
       const input = label.querySelector('input, textarea') || 
                    label.nextElementSibling?.querySelector('input, textarea') ||
-                   label.parentElement?.querySelector('input, textarea');
+                   label.parentElement?.querySelector('input, textarea') ||
+                   document.getElementById(label.getAttribute('for')) ||
+                   document.querySelector(`[aria-labelledby="${label.id}"]`);
+      
       if (input && !isOurInjectedElement(input)) {
-        console.log('Found subject field by label with "Email Subject":', label.textContent.trim());
+        console.log('Found subject field by label association:', label.textContent.trim());
         return input;
       }
     }
   }
   
-  // Strategy 5: Debug - log all inputs and their attributes (excluding ours)
-  console.log('Debug: All input fields with details (excluding our injected elements):');
+  // Strategy 7: React-specific patterns
+  const reactInputs = document.querySelectorAll('[data-reactroot] input, [data-reactroot] textarea');
+  for (const input of reactInputs) {
+    if (isOurInjectedElement(input)) continue;
+    
+    // Look for React event handlers or specific patterns
+    const parent = input.closest('[class*="form"], [class*="field"], [class*="input"]');
+    if (parent && parent.textContent && parent.textContent.toLowerCase().includes('email subject')) {
+      console.log('Found subject field by React pattern analysis');
+      return input;
+    }
+  }
+  
+  // Strategy 8: Debug logging for troubleshooting
+  console.log('Debug: All potential subject fields found:');
   allInputs.forEach((input, index) => {
     if (!isOurInjectedElement(input)) {
-      console.log(`Input ${index}:`, {
+      const attributes = {
         tagName: input.tagName,
         placeholder: input.placeholder,
         name: input.name,
         id: input.id,
         type: input.type,
-        ariaLabel: input.getAttribute('aria-label'),
+        'aria-label': input.getAttribute('aria-label'),
+        'aria-labelledby': input.getAttribute('aria-labelledby'),
         title: input.title,
+        'data-testid': input.getAttribute('data-testid'),
+        'data-cy': input.getAttribute('data-cy'),
+        'data-automation': input.getAttribute('data-automation'),
         parentText: input.parentElement?.textContent?.substring(0, 100)
-      });
+      };
+      console.log(`Input ${index}:`, attributes);
     }
   });
   
   return null;
 }
 
-// Helper function to find the Body field
+// Helper function to find the Body field using multiple robust strategies
 function findBodyField() {
-  console.log('Searching for Body field...');
+  console.log('Searching for Body field using robust detection...');
   
-  // Strategy 1: Exact placeholder matches for Email Body (exclude our injected elements)
+  // Strategy 1: Modern data attributes (most reliable)
+  const dataSelectors = [
+    'textarea[data-placeholder="Notification body"]',
+    'textarea[data-placeholder*="body"]',
+    'textarea[data-testid*="body"]',
+    'textarea[data-testid*="Body"]',
+    'textarea[data-cy*="body"]',
+    'textarea[data-automation*="body"]',
+    'textarea[data-field*="body"]',
+    'textarea[data-name*="body"]'
+  ];
+  
+  for (const selector of dataSelectors) {
+    const field = document.querySelector(selector);
+    if (field && !isOurInjectedElement(field)) {
+      console.log(`Found body field using data attribute: ${selector}`);
+      return field;
+    }
+  }
+  
+  // Strategy 2: ARIA attributes (accessibility-first approach)
+  const ariaSelectors = [
+    'textarea[aria-label*="Notification Body"]',
+    'textarea[aria-label*="notification body"]',
+    'textarea[aria-label*="Email Body"]',
+    'textarea[aria-label*="email body"]',
+    'textarea[aria-labelledby*="body"]',
+    'textarea[aria-describedby*="body"]'
+  ];
+  
+  for (const selector of ariaSelectors) {
+    const field = document.querySelector(selector);
+    if (field && !isOurInjectedElement(field)) {
+      console.log(`Found body field using ARIA: ${selector}`);
+      return field;
+    }
+  }
+  
+  // Strategy 3: Form structure analysis - look for consistent patterns
+  const forms = document.querySelectorAll('form, [role="form"], [class*="form"]');
+  for (const form of forms) {
+    // Look for field groups or sections
+    const fieldGroups = form.querySelectorAll('[class*="field"], [class*="input"], [class*="form-group"]');
+    for (const group of fieldGroups) {
+      if (group.textContent && group.textContent.toLowerCase().includes('notification body')) {
+        const textarea = group.querySelector('textarea');
+        if (textarea && !isOurInjectedElement(textarea)) {
+          console.log('Found body field by form structure analysis:', group.textContent.trim());
+          return textarea;
+        }
+      }
+    }
+  }
+  
+  // Strategy 4: Exact placeholder matches (fallback)
   const exactSelectors = [
+    'textarea[placeholder="Notification Body"]',
     'textarea[placeholder="Email Body"]',
+    'textarea[placeholder*="Notification Body"]',
     'textarea[placeholder*="Email Body"]',
-    'textarea[placeholder*="email body"]',
-    'textarea[placeholder*="EMAIL BODY"]'
+    'textarea[placeholder*="notification body"]',
+    'textarea[placeholder*="email body"]'
   ];
   
   for (const selector of exactSelectors) {
     const field = document.querySelector(selector);
     if (field && !isOurInjectedElement(field)) {
-      console.log(`Found body field using exact selector: ${selector}`);
+      console.log(`Found body field using placeholder: ${selector}`);
       return field;
     }
   }
   
-  // Strategy 2: Look for fields with "Email Body" in any attribute (exclude our elements)
+  // Strategy 5: Smart text search with context validation
   const allTextareas = document.querySelectorAll('textarea');
   for (const textarea of allTextareas) {
-    // Skip our injected elements
-    if (isOurInjectedElement(textarea)) {
-      continue;
-    }
+    if (isOurInjectedElement(textarea)) continue;
     
-    // Check placeholder, name, id, aria-label, title
-    const placeholder = textarea.placeholder || '';
-    const name = textarea.name || '';
-    const id = textarea.id || '';
-    const ariaLabel = textarea.getAttribute('aria-label') || '';
-    const title = textarea.title || '';
+    // Check all possible attributes
+    const attributes = {
+      placeholder: textarea.placeholder || '',
+      name: textarea.name || '',
+      id: textarea.id || '',
+      'aria-label': textarea.getAttribute('aria-label') || '',
+      'aria-labelledby': textarea.getAttribute('aria-labelledby') || '',
+      title: textarea.title || '',
+      'data-testid': textarea.getAttribute('data-testid') || '',
+      'data-cy': textarea.getAttribute('data-cy') || '',
+      'data-automation': textarea.getAttribute('data-automation') || '',
+      'data-placeholder': textarea.getAttribute('data-placeholder') || ''
+    };
     
-    if (placeholder.toLowerCase().includes('email body') ||
-        name.toLowerCase().includes('email body') ||
-        id.toLowerCase().includes('email body') ||
-        ariaLabel.toLowerCase().includes('email body') ||
-        title.toLowerCase().includes('email body')) {
-      console.log(`Found body field by attribute search:`, { placeholder, name, id, ariaLabel, title });
+    // Check if any attribute contains body-related text
+    const hasBody = Object.values(attributes).some(value => 
+      value.toLowerCase().includes('notification body') || 
+      value.toLowerCase().includes('email body') ||
+      value.toLowerCase().includes('body')
+    );
+    
+    if (hasBody) {
+      console.log('Found body field by attribute analysis:', attributes);
       return textarea;
     }
   }
   
-  // Strategy 3: Search by nearby text content (exclude our elements)
-  for (const textarea of allTextareas) {
-    // Skip our injected elements
-    if (isOurInjectedElement(textarea)) {
-      continue;
-    }
-    
-    // Look at parent elements for text content
-    let element = textarea.parentElement;
-    let depth = 0;
-    while (element && depth < 5) { // Look up to 5 levels up
-      if (element.textContent) {
-        const text = element.textContent.toLowerCase();
-        if (text.includes('email body') && !text.includes('email notification context')) {
-          console.log(`Found body field by nearby text (depth ${depth}):`, element.textContent.trim());
-          return textarea;
-        }
-      }
-      element = element.parentElement;
-      depth++;
-    }
-  }
-  
-  // Strategy 4: Look for labels with "Email Body" (exclude our elements)
+  // Strategy 6: Label association search
   const labels = document.querySelectorAll('label, span, div');
   for (const label of labels) {
     if (label.textContent && 
-        label.textContent.toLowerCase().includes('email body') && 
+        (label.textContent.toLowerCase().includes('notification body') || 
+         label.textContent.toLowerCase().includes('email body')) && 
         !label.textContent.toLowerCase().includes('email notification context')) {
-      // Find the associated textarea
+      
+      // Find associated textarea using multiple methods
       const textarea = label.querySelector('textarea') || 
                       label.nextElementSibling?.querySelector('textarea') ||
-                      label.parentElement?.querySelector('textarea');
+                      label.parentElement?.querySelector('textarea') ||
+                      document.getElementById(label.getAttribute('for')) ||
+                      document.querySelector(`[aria-labelledby="${label.id}"]`);
+      
       if (textarea && !isOurInjectedElement(textarea)) {
-        console.log('Found body field by label with "Email Body":', label.textContent.trim());
+        console.log('Found body field by label association:', label.textContent.trim());
         return textarea;
       }
     }
   }
   
-  // Strategy 5: Look for the largest textarea (often the main content field) - exclude ours
+  // Strategy 7: React-specific patterns
+  const reactTextareas = document.querySelectorAll('[data-reactroot] textarea');
+  for (const textarea of reactTextareas) {
+    if (isOurInjectedElement(textarea)) continue;
+    
+    // Look for React event handlers or specific patterns
+    const parent = textarea.closest('[class*="form"], [class*="field"], [class*="input"]');
+    if (parent && parent.textContent && parent.textContent.toLowerCase().includes('notification body')) {
+      console.log('Found body field by React pattern analysis');
+      return textarea;
+    }
+  }
+  
+  // Strategy 8: Look for the largest textarea (often the main content field) - exclude ours
   const validTextareas = Array.from(allTextareas).filter(textarea => !isOurInjectedElement(textarea));
   if (validTextareas.length > 0) {
     const largestTextarea = validTextareas.reduce((largest, current) => {
@@ -1328,19 +1441,25 @@ function findBodyField() {
     return largestTextarea;
   }
   
-  // Strategy 6: Debug - log all textareas and their attributes (excluding ours)
-  console.log('Debug: All textarea fields with details (excluding our injected elements):');
+  // Strategy 9: Debug logging for troubleshooting
+  console.log('Debug: All potential body fields found:');
   allTextareas.forEach((textarea, index) => {
     if (!isOurInjectedElement(textarea)) {
-      console.log(`Textarea ${index}:`, {
+      const attributes = {
         placeholder: textarea.placeholder,
         name: textarea.name,
         id: textarea.id,
-        ariaLabel: textarea.getAttribute('aria-label'),
+        'aria-label': textarea.getAttribute('aria-label'),
+        'aria-labelledby': textarea.getAttribute('aria-labelledby'),
         title: textarea.title,
-        parentText: textarea.parentElement?.textContent?.substring(0, 100),
+        'data-testid': textarea.getAttribute('data-testid'),
+        'data-cy': textarea.getAttribute('data-cy'),
+        'data-automation': textarea.getAttribute('data-automation'),
+        'data-placeholder': textarea.getAttribute('data-placeholder'),
+        parentText: textarea.parentElement?.textContent?.substring(0,100),
         size: `${textarea.offsetWidth}x${textarea.offsetHeight}`
-      });
+      };
+      console.log(`Textarea ${index}:`, attributes);
     }
   });
   
