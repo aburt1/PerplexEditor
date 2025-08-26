@@ -741,7 +741,7 @@ function openInPageActionMenu() {
 }
 
 // Kuali-specific functions
-function injectKualiContextInput() {
+function injectKualiContextInput(stepType = 'notification') {
   // Check if we already injected the input
   if (document.getElementById('kuali-context-input')) {
     return;
@@ -818,8 +818,27 @@ function injectKualiContextInput() {
     z-index: 1000;
   `;
   
+  // Update UI based on step type
+  const stepTypeLabels = {
+    'approval': 'CSUB Kuali Approval Email Builder:',
+    'task': 'CSUB Kuali Task Email Builder:',
+    'notification': 'CSUB Kuali Email Builder:'
+  };
+  
+  const stepTypePlaceholders = {
+    'approval': 'Enter form details: Form name, submitter name/ID, approver role, and any special instructions. Example: "Course Substitution Waiver for John Smith (CSUB ID: 12345), needs department chair approval, deadline is Friday."',
+    'task': 'Enter form details: Form name, submitter name/ID, task description, and any special instructions. Example: "Course Substitution Waiver for John Smith (CSUB ID: 12345), needs registrar verification, deadline is Friday."',
+    'notification': 'Enter form details: Form name, submitter name/ID, workflow step, and any special instructions. Example: "Course Substitution Waiver for John Smith (CSUB ID: 12345), needs department chair approval, deadline is Friday."'
+  };
+  
+  const stepTypeButtonText = {
+    'approval': 'Generate Approval Email',
+    'task': 'Generate Task Email',
+    'notification': 'Generate CSUB Email'
+  };
+  
   const label = document.createElement('label');
-  label.textContent = 'Email Notification Context:';
+  label.textContent = stepTypeLabels[stepType] || stepTypeLabels['notification'];
   label.style.cssText = `
     display: block;
     margin-bottom: 8px;
@@ -829,7 +848,7 @@ function injectKualiContextInput() {
   `;
   
   const textarea = document.createElement('textarea');
-  textarea.placeholder = 'Describe what you want the email notification to be about...';
+  textarea.placeholder = stepTypePlaceholders[stepType] || stepTypePlaceholders['notification'];
   textarea.style.cssText = `
     width: 100%;
     min-height: 80px;
@@ -843,7 +862,7 @@ function injectKualiContextInput() {
   `;
   
   const generateBtn = document.createElement('button');
-  generateBtn.textContent = 'Generate Notification';
+  generateBtn.textContent = stepTypeButtonText[stepType] || stepTypeButtonText['notification'];
   generateBtn.style.cssText = `
     margin-top: 10px;
     padding: 8px 16px;
@@ -876,8 +895,8 @@ function injectKualiContextInput() {
         return;
       }
       
-      // Generate the notification
-      const result = await processKualiNotification(context, config);
+      // Generate the notification based on step type
+      const result = await processKualiNotification(context, config, stepType);
       if (result) {
         displayKualiNotificationResult(result);
       }
@@ -910,14 +929,50 @@ function setupMutationObserver() {
   const observer = new MutationObserver((mutations) => {
     for (const mutation of mutations) {
       if (mutation.type === 'childList') {
-        // Check if the notification content has appeared
-        const hasNotificationContent = document.querySelector('*:contains("NOTIFICATION STEP OPTIONS")') || 
-                                     document.querySelector('*:contains("Step Label")') ||
-                                     document.querySelector('input[placeholder*="Notification"]');
+        // Check if any workflow step content has appeared
+        let hasApprovalContent = false;
+        let hasTaskContent = false;
+        let hasNotificationContent = false;
         
-        if (hasNotificationContent) {
-          console.log('Notification content detected, attempting injection...');
-          setTimeout(() => injectKualiContextInput(), 100); // Small delay to ensure DOM is ready
+        // Search for approval content
+        const allElements = document.querySelectorAll('*');
+        for (const element of allElements) {
+          if (element.textContent && element.textContent.includes('Approval Step Options')) {
+            hasApprovalContent = true;
+            break;
+          }
+        }
+        
+        // Search for task content
+        for (const element of allElements) {
+          if (element.textContent && element.textContent.includes('Task Step Options')) {
+            hasTaskContent = true;
+            break;
+          }
+        }
+        
+        // Search for notification content
+        for (const element of allElements) {
+          if (element.textContent && element.textContent.includes('NOTIFICATION STEP OPTIONS')) {
+            hasNotificationContent = true;
+            break;
+          }
+        }
+        
+        // Also check for email fields as fallback
+        const hasEmailFields = document.querySelector('input[placeholder*="Notification"]') || 
+                              document.querySelector('*[data-placeholder*="Notification"]');
+        if (hasEmailFields) {
+          hasNotificationContent = true;
+        }
+        
+        if (hasApprovalContent || hasTaskContent || hasNotificationContent) {
+          let stepType = 'notification';
+          if (hasApprovalContent) stepType = 'approval';
+          else if (hasTaskContent) stepType = 'task';
+          
+          console.log(`${stepType.charAt(0).toUpperCase() + stepType.slice(1)} step content detected, attempting injection...`);
+          setTimeout(() => injectKualiContextInput(stepType), 100); // Small delay to ensure DOM is ready
           observer.disconnect();
           window.kualiObserver = null;
           break;
@@ -939,24 +994,159 @@ function setupMutationObserver() {
       observer.disconnect();
       window.kualiObserver = null;
     } else {
-      injectKualiContextInput();
+      // Try to detect step type and inject accordingly
+      let hasApprovalContent = false;
+      let hasTaskContent = false;
+      let hasNotificationContent = false;
+      
+      // Search for approval content
+      const allElements = document.querySelectorAll('*');
+      for (const element of allElements) {
+        if (element.textContent && element.textContent.includes('Approval Step Options')) {
+          hasApprovalContent = true;
+          break;
+        }
+      }
+      
+      // Search for task content
+      for (const element of allElements) {
+        if (element.textContent && element.textContent.includes('Task Step Options')) {
+          hasTaskContent = true;
+          break;
+        }
+      }
+      
+      // Search for notification content
+      for (const element of allElements) {
+        if (element.textContent && element.textContent.includes('NOTIFICATION STEP OPTIONS')) {
+          hasNotificationContent = true;
+          break;
+        }
+      }
+      
+      // Also check for email fields as fallback
+      const hasEmailFields = document.querySelector('input[placeholder*="Notification"]') || 
+                            document.querySelector('*[data-placeholder*="Notification"]');
+      if (hasEmailFields) {
+        hasNotificationContent = true;
+      }
+      
+      let stepType = 'notification';
+      if (hasApprovalContent) stepType = 'approval';
+      else if (hasTaskContent) stepType = 'task';
+      
+      console.log('Fallback injection - Step type detected:', stepType);
+      injectKualiContextInput(stepType);
     }
   }, 2000);
 }
 
-async function processKualiNotification(context, config) {
+async function processKualiNotification(context, config, stepType = 'notification') {
   try {
-    // Simplified prompt for just Subject and Body
-    const prompt = `You are an expert at creating professional email notifications. Based on the provided context, create a concise email notification with:
+    // CSUB Kuali Email Template prompts based on custom GPT rules for each step type
+    const stepTypePrompts = {
+      'approval': `You are Kuali Email Builder, an expert at creating official, template-based workflow emails for California State University, Bakersfield (CSUB). 
 
-1. **SUBJECT**: A clear, concise subject line (max 60 characters)
-2. **BODY**: A professional email body (2-3 sentences)
+Based on the provided context, create a professional APPROVAL email following CSUB-approved templates and formatting:
+
+**Requirements:**
+1. **SUBJECT**: Use the exact format: "Action Required: [FormName] for [SubmitterName] (CSUB ID: [SubmitterID])"
+2. **BODY**: Create a professional approval email body following CSUB formatting rules
+
+**Approval Email Structure Rules:**
+- Use "Begin Review" language as specified in CSUB templates
+- Use formal, professional tone appropriate for academic workflow approval
+- Follow CSUB email templates and formatting standards
+- Keep body concise but complete (2-4 sentences)
+- Use clear, actionable language
+- Include appropriate workflow context
+
+**Subject Line Format:**
+- "Action Required: [FormName] for [SubmitterName] (CSUB ID: [SubmitterID])"
+
+**Body Content Guidelines:**
+- Begin with appropriate greeting
+- Clearly state this is an approval request
+- Include relevant workflow step information
+- Use professional, academic tone
+- End with appropriate closing
+- Do NOT include a closing signature (as per CSUB approval email rules)
 
 Format your response exactly as:
 SUBJECT: [Your subject here]
 BODY: [Your email body here]
 
-Context: ${context}`;
+Context: ${context}`,
+
+      'task': `You are Kuali Email Builder, an expert at creating official, template-based workflow emails for California State University, Bakersfield (CSUB). 
+
+Based on the provided context, create a professional TASK email following CSUB-approved templates and formatting:
+
+**Requirements:**
+1. **SUBJECT**: Use the exact format: "Action Required: [FormName] for [SubmitterName] (CSUB ID: [SubmitterID])"
+2. **BODY**: Create a professional task email body following CSUB formatting rules
+
+**Task Email Structure Rules:**
+- Use "View Task" language as specified in CSUB templates
+- Use formal, professional tone appropriate for academic workflow tasks
+- Follow CSUB email templates and formatting standards
+- Keep body concise but complete (2-4 sentences)
+- Use clear, actionable language
+- Include appropriate workflow context
+
+**Subject Line Format:**
+- "Action Required: [FormName] for [SubmitterName] (CSUB ID: [SubmitterID])"
+
+**Body Content Guidelines:**
+- Begin with appropriate greeting
+- Clearly state this is a task that needs completion
+- Include relevant workflow step information
+- Use professional, academic tone
+- End with appropriate closing
+- Do NOT include a closing signature (as per CSUB task email rules)
+
+Format your response exactly as:
+SUBJECT: [Your subject here]
+BODY: [Your email body here]
+
+Context: ${context}`,
+
+      'notification': `You are Kuali Email Builder, an expert at creating official, template-based workflow emails for California State University, Bakersfield (CSUB). 
+
+Based on the provided context, create a professional email notification following CSUB-approved templates and formatting:
+
+**Requirements:**
+1. **SUBJECT**: Use the exact format: "Action Required: [FormName] for [SubmitterName] (CSUB ID: [SubmitterID])" or appropriate variation
+2. **BODY**: Create a professional email body following CSUB formatting rules
+
+**Email Structure Rules:**
+- Use formal, professional tone appropriate for academic workflow
+- Follow CSUB email templates and formatting standards
+- Keep body concise but complete (2-4 sentences)
+- Use clear, actionable language
+- Include appropriate workflow context
+
+**Subject Line Format Options:**
+- "Action Required: [FormName] for [SubmitterName] (CSUB ID: [SubmitterID])"
+- "Revision's Needed – [FormName] [StudentName] (CSUB ID: [StudentID])"
+- "Notification – [FormName] Processed"
+- "Confirmation of Submission – [FormName]"
+
+**Body Content Guidelines:**
+- Begin with appropriate greeting
+- Clearly state the purpose/action required
+- Include relevant workflow step information
+- Use professional, academic tone
+- End with appropriate closing
+
+Format your response exactly as:
+SUBJECT: [Your subject here]
+BODY: [Your email body here]
+
+Context: ${context}`
+    };
+
+    const prompt = stepTypePrompts[stepType] || stepTypePrompts['notification'];
     
     const requestBody = {
       model: 'sonar',
@@ -1037,9 +1227,17 @@ function fillKualiFormFieldsDirectly(fields) {
       if (fields.SUBJECT) {
         const subjectField = findSubjectField();
         if (subjectField) {
-          subjectField.value = fields.SUBJECT;
+          // Handle Quill editor (div.ql-editor) vs regular input
+          if (subjectField.classList.contains('ql-editor')) {
+            // For Quill editor, set innerHTML with <p> tags
+            subjectField.innerHTML = `<p>${fields.SUBJECT}</p>`;
+            console.log(`Filled Quill editor SUBJECT field with: "${fields.SUBJECT}"`);
+          } else {
+            // For regular input, set value
+            subjectField.value = fields.SUBJECT;
+            console.log(`Filled input SUBJECT field with: "${fields.SUBJECT}"`);
+          }
           triggerFieldEvents(subjectField);
-          console.log(`Filled SUBJECT field with: "${fields.SUBJECT}"`);
           filledCount++;
           filledFields.push('SUBJECT');
         } else {
@@ -1051,9 +1249,17 @@ function fillKualiFormFieldsDirectly(fields) {
       if (fields.BODY) {
         const bodyField = findBodyField();
         if (bodyField) {
-          bodyField.value = fields.BODY;
+          // Handle Quill editor (div.ql-editor) vs regular textarea
+          if (bodyField.classList.contains('ql-editor')) {
+            // For Quill editor, set innerHTML with <p> tags
+            bodyField.innerHTML = `<p>${fields.BODY}</p>`;
+            console.log(`Filled Quill editor BODY field with: "${fields.BODY}"`);
+          } else {
+            // For regular textarea, set value
+            bodyField.value = fields.BODY;
+            console.log(`Filled textarea BODY field with: "${fields.BODY}"`);
+          }
           triggerFieldEvents(bodyField);
-          console.log(`Filled BODY field with: "${fields.BODY}"`);
           filledCount++;
           filledFields.push('BODY');
         } else {
@@ -1085,7 +1291,7 @@ function fillKualiFormFieldsDirectly(fields) {
 function waitForKualiForm() {
   return new Promise((resolve) => {
     // Check if form is already loaded
-    if (document.querySelector('input[placeholder*="Email Subject"], textarea[placeholder*="Email Body"]')) {
+    if (document.querySelector('div.ql-editor[data-placeholder="Notification subject"], div.ql-editor[data-placeholder="Notification body"]')) {
       console.log('Kuali form already loaded');
       resolve();
       return;
@@ -1097,13 +1303,13 @@ function waitForKualiForm() {
     const observer = new MutationObserver((mutations) => {
       for (const mutation of mutations) {
         if (mutation.type === 'childList') {
-          // Check if the form fields have appeared
-          if (document.querySelector('input[placeholder*="Email Subject"], textarea[placeholder*="Email Body"]')) {
-            console.log('Kuali form detected, resolving promise');
-            observer.disconnect();
-            resolve();
-            return;
-          }
+                  // Check if the form fields have appeared
+        if (document.querySelector('div.ql-editor[data-placeholder="Notification subject"], div.ql-editor[data-placeholder="Notification body"]')) {
+          console.log('Kuali form detected, resolving promise');
+          observer.disconnect();
+          resolve();
+          return;
+        }
         }
       }
     });
@@ -1115,7 +1321,7 @@ function waitForKualiForm() {
     
     // Also try to resolve after a timeout in case the observer doesn't catch it
     setTimeout(() => {
-      if (document.querySelector('input[placeholder*="Email Subject"], textarea[placeholder*="Email Body"]')) {
+      if (document.querySelector('div.ql-editor[data-placeholder="Notification subject"], div.ql-editor[data-placeholder="Notification body"]')) {
         console.log('Kuali form detected via timeout');
         observer.disconnect();
         resolve();
@@ -1128,341 +1334,85 @@ function waitForKualiForm() {
   });
 }
 
-// Helper function to find the Subject field using multiple robust strategies
+// Helper function to find the Subject field using the most reliable strategy
 function findSubjectField() {
-  console.log('Searching for Subject field using robust detection...');
+  console.log('Searching for Subject field using reliable detection...');
   
-  // Strategy 1: Modern data attributes (most reliable)
-  const dataSelectors = [
-    'input[data-placeholder="Notification subject"]',
-    'input[data-placeholder*="subject"]',
-    'input[data-testid*="subject"]',
-    'input[data-testid*="Subject"]',
-    'input[data-cy*="subject"]',
-    'input[data-automation*="subject"]',
-    'input[data-field*="subject"]',
-    'input[data-name*="subject"]'
-  ];
-  
-  for (const selector of dataSelectors) {
-    const field = document.querySelector(selector);
-    if (field && !isOurInjectedElement(field)) {
-      console.log(`Found subject field using data attribute: ${selector}`);
-      return field;
-    }
+  // Most reliable strategy: Quill editor div with data-placeholder (like body field)
+  let field = document.querySelector('div.ql-editor[data-placeholder="Notification subject"]');
+  if (field && !isOurInjectedElement(field)) {
+    console.log('Found subject field by Quill editor data-placeholder:', field);
+    return field;
   }
   
-  // Strategy 2: ARIA attributes (accessibility-first approach)
-  const ariaSelectors = [
-    'input[aria-label*="Email Subject"]',
-    'input[aria-label*="email subject"]',
-    'input[aria-labelledby*="subject"]',
-    'input[aria-describedby*="subject"]'
-  ];
-  
-  for (const selector of ariaSelectors) {
-    const field = document.querySelector(selector);
-    if (field && !isOurInjectedElement(field)) {
-      console.log(`Found subject field using ARIA: ${selector}`);
-      return field;
-    }
+  // Fallback: input with data-placeholder
+  field = document.querySelector('input[data-placeholder="Notification subject"]');
+  if (field && !isOurInjectedElement(field)) {
+    console.log('Found subject field by input data-placeholder:', field);
+    return field;
   }
   
-  // Strategy 3: Form structure analysis - look for consistent patterns
-  const forms = document.querySelectorAll('form, [role="form"], [class*="form"]');
-  for (const form of forms) {
-    // Look for field groups or sections
-    const fieldGroups = form.querySelectorAll('[class*="field"], [class*="input"], [class*="form-group"]');
-    for (const group of fieldGroups) {
-      if (group.textContent && group.textContent.toLowerCase().includes('email subject')) {
-        const input = group.querySelector('input, textarea');
-        if (input && !isOurInjectedElement(input)) {
-          console.log('Found subject field by form structure analysis:', group.textContent.trim());
-          return input;
-        }
-      }
-    }
-  }
+  // Debug: Let's see what data-placeholder values are actually available
+  console.log('Debug: Checking for subject-related fields...');
   
-  // Strategy 4: Exact placeholder matches (fallback)
-  const exactSelectors = [
-    'input[placeholder="Email Subject"]',
-    'input[placeholder*="Email Subject"]',
-    'input[placeholder*="email subject"]'
-  ];
-  
-  for (const selector of exactSelectors) {
-    const field = document.querySelector(selector);
-    if (field && !isOurInjectedElement(field)) {
-      console.log(`Found subject field using placeholder: ${selector}`);
-      return field;
-    }
-  }
-  
-  // Strategy 5: Smart text search with context validation
-  const allInputs = document.querySelectorAll('input, textarea');
-  for (const input of allInputs) {
-    if (isOurInjectedElement(input)) continue;
-    
-    // Check all possible attributes
-    const attributes = {
-      placeholder: input.placeholder || '',
-      name: input.name || '',
-      id: input.id || '',
-      'aria-label': input.getAttribute('aria-label') || '',
-      'aria-labelledby': input.getAttribute('aria-labelledby') || '',
-      title: input.title || '',
-      'data-testid': input.getAttribute('data-testid') || '',
-      'data-cy': input.getAttribute('data-cy') || '',
-      'data-automation': input.getAttribute('data-automation') || ''
-    };
-    
-    // Check if any attribute contains subject-related text
-    const hasSubject = Object.values(attributes).some(value => 
-      value.toLowerCase().includes('email subject') || 
-      value.toLowerCase().includes('subject')
-    );
-    
-    if (hasSubject) {
-      console.log('Found subject field by attribute analysis:', attributes);
-      return input;
-    }
-  }
-  
-  // Strategy 6: Label association search
-  const labels = document.querySelectorAll('label, span, div');
-  for (const label of labels) {
-    if (label.textContent && 
-        label.textContent.toLowerCase().includes('email subject') && 
-        !label.textContent.toLowerCase().includes('email notification context')) {
-      
-      // Find associated input using multiple methods
-      const input = label.querySelector('input, textarea') || 
-                   label.nextElementSibling?.querySelector('input, textarea') ||
-                   label.parentElement?.querySelector('input, textarea') ||
-                   document.getElementById(label.getAttribute('for')) ||
-                   document.querySelector(`[aria-labelledby="${label.id}"]`);
-      
-      if (input && !isOurInjectedElement(input)) {
-        console.log('Found subject field by label association:', label.textContent.trim());
-        return input;
-      }
-    }
-  }
-  
-  // Strategy 7: React-specific patterns
-  const reactInputs = document.querySelectorAll('[data-reactroot] input, [data-reactroot] textarea');
-  for (const input of reactInputs) {
-    if (isOurInjectedElement(input)) continue;
-    
-    // Look for React event handlers or specific patterns
-    const parent = input.closest('[class*="form"], [class*="field"], [class*="input"]');
-    if (parent && parent.textContent && parent.textContent.toLowerCase().includes('email subject')) {
-      console.log('Found subject field by React pattern analysis');
-      return input;
-    }
-  }
-  
-  // Strategy 8: Debug logging for troubleshooting
-  console.log('Debug: All potential subject fields found:');
+  // Check all input elements
+  const allInputs = document.querySelectorAll('input');
+  console.log(`Found ${allInputs.length} input elements`);
   allInputs.forEach((input, index) => {
     if (!isOurInjectedElement(input)) {
-      const attributes = {
-        tagName: input.tagName,
-        placeholder: input.placeholder,
-        name: input.name,
-        id: input.id,
-        type: input.type,
-        'aria-label': input.getAttribute('aria-label'),
-        'aria-labelledby': input.getAttribute('aria-labelledby'),
-        title: input.title,
-        'data-testid': input.getAttribute('data-testid'),
-        'data-cy': input.getAttribute('data-cy'),
-        'data-automation': input.getAttribute('data-automation'),
-        parentText: input.parentElement?.textContent?.substring(0, 100)
-      };
-      console.log(`Input ${index}:`, attributes);
+      const dataPlaceholder = input.getAttribute('data-placeholder');
+      const placeholder = input.placeholder;
+      const name = input.name;
+      const id = input.id;
+      const type = input.type;
+      if (dataPlaceholder || placeholder || name || id) {
+        console.log(`Input ${index}: data-placeholder="${dataPlaceholder}", placeholder="${placeholder}", name="${name}", id="${id}", type="${type}"`);
+      }
     }
   });
   
+  // Also check textarea elements (in case subject is a textarea)
+  const allTextareas = document.querySelectorAll('textarea');
+  console.log(`Found ${allTextareas.length} textarea elements`);
+  allTextareas.forEach((textarea, index) => {
+    if (!isOurInjectedElement(textarea)) {
+      const dataPlaceholder = textarea.getAttribute('data-placeholder');
+      const placeholder = textarea.placeholder;
+      const name = textarea.name;
+      const id = textarea.id;
+      if (dataPlaceholder || placeholder || name || id) {
+        console.log(`Textarea ${index}: data-placeholder="${dataPlaceholder}", placeholder="${placeholder}", name="${name}", id="${id}"`);
+      }
+    }
+  });
+  
+  // Check for any element with "subject" in any attribute
+  const subjectElements = document.querySelectorAll('[data-placeholder*="subject"], [data-placeholder*="Subject"], [placeholder*="subject"], [placeholder*="Subject"], [name*="subject"], [name*="Subject"], [id*="subject"], [id*="Subject"]');
+  console.log(`Found ${subjectElements.length} elements with "subject" in attributes:`, subjectElements);
+  
+  // Fallback: Try common subject field patterns
+  const fallbackField = document.querySelector('input[placeholder*="subject"], input[placeholder*="Subject"], input[name*="subject"], input[name*="Subject"], textarea[placeholder*="subject"], textarea[placeholder*="Subject"], textarea[name*="subject"], textarea[name*="Subject"]');
+  if (fallbackField && !isOurInjectedElement(fallbackField)) {
+    console.log('Found subject field using fallback pattern:', fallbackField);
+    return fallbackField;
+  }
+  
+  console.log('Subject field not found');
   return null;
 }
 
-// Helper function to find the Body field using multiple robust strategies
+// Helper function to find the Body field using the most reliable strategy
 function findBodyField() {
-  console.log('Searching for Body field using robust detection...');
+  console.log('Searching for Body field using reliable detection...');
   
-  // Strategy 1: Modern data attributes (most reliable)
-  const dataSelectors = [
-    'textarea[data-placeholder="Notification body"]',
-    'textarea[data-placeholder*="body"]',
-    'textarea[data-testid*="body"]',
-    'textarea[data-testid*="Body"]',
-    'textarea[data-cy*="body"]',
-    'textarea[data-automation*="body"]',
-    'textarea[data-field*="body"]',
-    'textarea[data-name*="body"]'
-  ];
-  
-  for (const selector of dataSelectors) {
-    const field = document.querySelector(selector);
-    if (field && !isOurInjectedElement(field)) {
-      console.log(`Found body field using data attribute: ${selector}`);
-      return field;
-    }
+  // Most reliable strategy: Quill editor div with data-placeholder
+  const field = document.querySelector('div.ql-editor[data-placeholder="Notification body"]');
+  if (field && !isOurInjectedElement(field)) {
+    console.log('Found body field by Quill editor data-placeholder:', field);
+    return field;
   }
   
-  // Strategy 2: ARIA attributes (accessibility-first approach)
-  const ariaSelectors = [
-    'textarea[aria-label*="Notification Body"]',
-    'textarea[aria-label*="notification body"]',
-    'textarea[aria-label*="Email Body"]',
-    'textarea[aria-label*="email body"]',
-    'textarea[aria-labelledby*="body"]',
-    'textarea[aria-describedby*="body"]'
-  ];
-  
-  for (const selector of ariaSelectors) {
-    const field = document.querySelector(selector);
-    if (field && !isOurInjectedElement(field)) {
-      console.log(`Found body field using ARIA: ${selector}`);
-      return field;
-    }
-  }
-  
-  // Strategy 3: Form structure analysis - look for consistent patterns
-  const forms = document.querySelectorAll('form, [role="form"], [class*="form"]');
-  for (const form of forms) {
-    // Look for field groups or sections
-    const fieldGroups = form.querySelectorAll('[class*="field"], [class*="input"], [class*="form-group"]');
-    for (const group of fieldGroups) {
-      if (group.textContent && group.textContent.toLowerCase().includes('notification body')) {
-        const textarea = group.querySelector('textarea');
-        if (textarea && !isOurInjectedElement(textarea)) {
-          console.log('Found body field by form structure analysis:', group.textContent.trim());
-          return textarea;
-        }
-      }
-    }
-  }
-  
-  // Strategy 4: Exact placeholder matches (fallback)
-  const exactSelectors = [
-    'textarea[placeholder="Notification Body"]',
-    'textarea[placeholder="Email Body"]',
-    'textarea[placeholder*="Notification Body"]',
-    'textarea[placeholder*="Email Body"]',
-    'textarea[placeholder*="notification body"]',
-    'textarea[placeholder*="email body"]'
-  ];
-  
-  for (const selector of exactSelectors) {
-    const field = document.querySelector(selector);
-    if (field && !isOurInjectedElement(field)) {
-      console.log(`Found body field using placeholder: ${selector}`);
-      return field;
-    }
-  }
-  
-  // Strategy 5: Smart text search with context validation
-  const allTextareas = document.querySelectorAll('textarea');
-  for (const textarea of allTextareas) {
-    if (isOurInjectedElement(textarea)) continue;
-    
-    // Check all possible attributes
-    const attributes = {
-      placeholder: textarea.placeholder || '',
-      name: textarea.name || '',
-      id: textarea.id || '',
-      'aria-label': textarea.getAttribute('aria-label') || '',
-      'aria-labelledby': textarea.getAttribute('aria-labelledby') || '',
-      title: textarea.title || '',
-      'data-testid': textarea.getAttribute('data-testid') || '',
-      'data-cy': textarea.getAttribute('data-cy') || '',
-      'data-automation': textarea.getAttribute('data-automation') || '',
-      'data-placeholder': textarea.getAttribute('data-placeholder') || ''
-    };
-    
-    // Check if any attribute contains body-related text
-    const hasBody = Object.values(attributes).some(value => 
-      value.toLowerCase().includes('notification body') || 
-      value.toLowerCase().includes('email body') ||
-      value.toLowerCase().includes('body')
-    );
-    
-    if (hasBody) {
-      console.log('Found body field by attribute analysis:', attributes);
-      return textarea;
-    }
-  }
-  
-  // Strategy 6: Label association search
-  const labels = document.querySelectorAll('label, span, div');
-  for (const label of labels) {
-    if (label.textContent && 
-        (label.textContent.toLowerCase().includes('notification body') || 
-         label.textContent.toLowerCase().includes('email body')) && 
-        !label.textContent.toLowerCase().includes('email notification context')) {
-      
-      // Find associated textarea using multiple methods
-      const textarea = label.querySelector('textarea') || 
-                      label.nextElementSibling?.querySelector('textarea') ||
-                      label.parentElement?.querySelector('textarea') ||
-                      document.getElementById(label.getAttribute('for')) ||
-                      document.querySelector(`[aria-labelledby="${label.id}"]`);
-      
-      if (textarea && !isOurInjectedElement(textarea)) {
-        console.log('Found body field by label association:', label.textContent.trim());
-        return textarea;
-      }
-    }
-  }
-  
-  // Strategy 7: React-specific patterns
-  const reactTextareas = document.querySelectorAll('[data-reactroot] textarea');
-  for (const textarea of reactTextareas) {
-    if (isOurInjectedElement(textarea)) continue;
-    
-    // Look for React event handlers or specific patterns
-    const parent = textarea.closest('[class*="form"], [class*="field"], [class*="input"]');
-    if (parent && parent.textContent && parent.textContent.toLowerCase().includes('notification body')) {
-      console.log('Found body field by React pattern analysis');
-      return textarea;
-    }
-  }
-  
-  // Strategy 8: Look for the largest textarea (often the main content field) - exclude ours
-  const validTextareas = Array.from(allTextareas).filter(textarea => !isOurInjectedElement(textarea));
-  if (validTextareas.length > 0) {
-    const largestTextarea = validTextareas.reduce((largest, current) => {
-      return (current.offsetHeight * current.offsetWidth) > (largest.offsetHeight * largest.offsetWidth) ? current : largest;
-    });
-    console.log('Using largest textarea as body field (excluding our elements):', largestTextarea);
-    return largestTextarea;
-  }
-  
-  // Strategy 9: Debug logging for troubleshooting
-  console.log('Debug: All potential body fields found:');
-  allTextareas.forEach((textarea, index) => {
-    if (!isOurInjectedElement(textarea)) {
-      const attributes = {
-        placeholder: textarea.placeholder,
-        name: textarea.name,
-        id: textarea.id,
-        'aria-label': textarea.getAttribute('aria-label'),
-        'aria-labelledby': textarea.getAttribute('aria-labelledby'),
-        title: textarea.title,
-        'data-testid': textarea.getAttribute('data-testid'),
-        'data-cy': textarea.getAttribute('data-cy'),
-        'data-automation': textarea.getAttribute('data-automation'),
-        'data-placeholder': textarea.getAttribute('data-placeholder'),
-        parentText: textarea.parentElement?.textContent?.substring(0,100),
-        size: `${textarea.offsetWidth}x${textarea.offsetHeight}`
-      };
-      console.log(`Textarea ${index}:`, attributes);
-    }
-  });
-  
+  console.log('Body field not found');
   return null;
 }
 
@@ -1523,9 +1473,17 @@ function setupRetryForFields(fields) {
     if (fields.SUBJECT) {
       const subjectField = findSubjectField();
       if (subjectField) {
-        subjectField.value = fields.SUBJECT;
+        // Handle Quill editor (div.ql-editor) vs regular input
+        if (subjectField.classList.contains('ql-editor')) {
+          // For Quill editor, set innerHTML with <p> tags
+          subjectField.innerHTML = `<p>${fields.SUBJECT}</p>`;
+          console.log(`Retry: Filled Quill editor SUBJECT field with: "${fields.SUBJECT}"`);
+        } else {
+          // For regular input, set value
+          subjectField.value = fields.SUBJECT;
+          console.log(`Retry: Filled input SUBJECT field with: "${fields.SUBJECT}"`);
+        }
         triggerFieldEvents(subjectField);
-        console.log(`Retry: Filled SUBJECT field with: "${fields.SUBJECT}"`);
         filledCount++;
       }
     }
@@ -1533,9 +1491,17 @@ function setupRetryForFields(fields) {
     if (fields.BODY) {
       const bodyField = findBodyField();
       if (bodyField) {
-        bodyField.value = fields.BODY;
+        // Handle Quill editor (div.ql-editor) vs regular textarea
+        if (bodyField.classList.contains('ql-editor')) {
+          // For Quill editor, set innerHTML with <p> tags
+          bodyField.innerHTML = `<p>${fields.BODY}</p>`;
+          console.log(`Retry: Filled Quill editor BODY field with: "${fields.BODY}"`);
+        } else {
+          // For regular textarea, set value
+          bodyField.value = fields.BODY;
+          console.log(`Retry: Filled textarea BODY field with: "${fields.BODY}"`);
+        }
         triggerFieldEvents(bodyField);
-        console.log(`Retry: Filled BODY field with: "${fields.BODY}"`);
         filledCount++;
       }
     }
@@ -1564,20 +1530,68 @@ function setupAutomaticInjection() {
   if (window.location.hostname.includes('kuali')) {
     console.log('Kuali page detected, setting up automatic injection...');
     
-    // Function to check if we're on a notification page and inject
+    // Function to check if we're on a workflow step page and inject
     function checkAndInject() {
-      // Look for notification-related content
-      const hasNotificationContent = document.querySelector('*:contains("NOTIFICATION STEP OPTIONS")') || 
-                                   document.querySelector('*:contains("Step Label")') ||
-                                   document.querySelector('input[placeholder*="Notification"]') ||
-                                   document.querySelector('*:contains("Email Subject")') ||
-                                   document.querySelector('*:contains("Email Body")');
+      // Look for workflow step content using reliable text search
+      let hasApprovalContent = false;
+      let hasTaskContent = false;
+      let hasNotificationContent = false;
       
-      if (hasNotificationContent) {
-        console.log('Notification content found, injecting context input...');
-        injectKualiContextInput();
+      // Search for approval content
+      const allElements = document.querySelectorAll('*');
+      for (const element of allElements) {
+        if (element.textContent && element.textContent.includes('Approval Step Options')) {
+          hasApprovalContent = true;
+          break;
+        }
+      }
+      
+      // Search for task content
+      for (const element of allElements) {
+        if (element.textContent && element.textContent.includes('Task Step Options')) {
+          hasTaskContent = true;
+          break;
+        }
+      }
+      
+      // Search for notification content
+      for (const element of allElements) {
+        if (element.textContent && element.textContent.includes('NOTIFICATION STEP OPTIONS')) {
+          hasNotificationContent = true;
+          break;
+        }
+      }
+      
+      // Also check for email fields as fallback
+      const hasEmailFields = document.querySelector('input[placeholder*="Notification"]') || 
+                            document.querySelector('*[data-placeholder*="Notification"]');
+      if (hasEmailFields) {
+        hasNotificationContent = true;
+      }
+      
+      if (hasApprovalContent || hasTaskContent || hasNotificationContent) {
+        let stepType = 'notification';
+        if (hasApprovalContent) stepType = 'approval';
+        else if (hasTaskContent) stepType = 'task';
+        
+        console.log(`${stepType.charAt(0).toUpperCase() + stepType.slice(1)} step content found, injecting context input...`);
+        injectKualiContextInput(stepType);
         return true;
       }
+      
+      console.log('No workflow step content found. Approval:', hasApprovalContent, 'Task:', hasTaskContent, 'Notification:', hasNotificationContent);
+      
+      // Debug: Log some page content to help troubleshoot
+      console.log('Debug: Page title:', document.title);
+      console.log('Debug: Looking for text content...');
+      const debugElements = document.querySelectorAll('h1, h2, h3, h4, h5, h6, div, span');
+      for (let i = 0; i < Math.min(20, debugElements.length); i++) {
+        const element = debugElements[i];
+        if (element.textContent && element.textContent.trim().length > 0) {
+          console.log('Debug element', i, ':', element.textContent.trim().substring(0, 100));
+        }
+      }
+      
       return false;
     }
     

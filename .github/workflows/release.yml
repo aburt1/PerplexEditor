@@ -30,7 +30,7 @@ jobs:
       - name: Package extension to XPI
         run: |
           # Create XPI file (Firefox extension package)
-          zip -r perplexeditor.xpi . \
+          zip -r andrews-tools.xpi . \
             -x '*.git*' \
             -x '*.DS_Store' \
             -x 'node_modules/*' \
@@ -49,7 +49,7 @@ jobs:
           tag_name: release-$(date +%Y%m%d-%H%M%S)
           release_name: Release $(date +%Y-%m-%d %H:%M:%S)
           body: |
-            ## PerplexEditor Firefox Extension
+            ## Andrew's Tools Firefox Extension
             
             Automated release from GitHub Actions
             
@@ -58,7 +58,7 @@ jobs:
             - **Build Date**: $(date)
             
             ### Installation
-            1. Download the `perplexeditor.xpi` file
+            1. Download the `andrews-tools.xpi` file
             2. Open Firefox and go to `about:addons`
             3. Click the gear icon and select "Install Add-on From File"
             4. Choose the downloaded XPI file
@@ -71,6 +71,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./perplexeditor.xpi
-          asset_name: perplexeditor.xpi
+          asset_path: ./andrews-tools.xpi
+          asset_name: andrews-tools.xpi
           asset_content_type: application/x-xpinstall

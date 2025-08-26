@@ -1,22 +1,25 @@
 {
-  "name": "perplexeditor",
+  "name": "andrews-tools",
   "version": "1.0.0",
-  "description": "A Firefox extension for AI-powered text editing, rewriting, and enhancement using Perplexity AI",
+  "description": "A Firefox extension with a collection of useful tools including AI-powered text editing and Kuali email generation",
   "main": "manifest.json",
   "scripts": {
     "build": "echo 'Building extension...' && echo 'Extension built successfully!'",
     "install": "echo 'To install: Load manifest.json as temporary add-on in Firefox'",
-    "package": "zip -r perplexeditor.xpi . -x '*.git*' '*.DS_Store' 'node_modules/*' 'package*.json' 'README.md' 'CHANGELOG.md' 'LICENSE' '.github/*'",
+    "package": "zip -r andrews-tools.xpi . -x '*.git*' '*.DS_Store' 'node_modules/*' 'package*.json' 'README.md' 'CHANGELOG.md' 'LICENSE' '.github/*'",
     "build:extension": "npm run build && npm run package"
   },
       "keywords": [
       "firefox-extension",
+      "tools",
       "ai-text-editor",
       "text-rewriting",
       "ai",
       "perplexity",
       "context-menu",
-      "text-editing"
+      "text-editing",
+      "kuali",
+      "email-generation"
     ],
   "author": "Your Name",
   "license": "MIT",

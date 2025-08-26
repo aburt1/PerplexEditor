@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to PerplexEditor will be documented in this file.
+All notable changes to Andrew's Tools will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
@@ -14,7 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Better error handling and user feedback
 
 ### Changed
-- Renamed from "AI Text Editor" to "PerplexEditor"
+- Renamed from "AI Text Editor" to "Andrew's Tools"
 - Updated all branding and references
 - Improved README with better GitHub formatting
 
@@ -26,7 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.0.0] - 2024-01-XX
 
 ### Added
-- Initial release of PerplexEditor
+- Initial release of Andrew's Tools
 - Context menu integration for text editing
 - Four AI-powered functions: rewrite, reword, improve, summarize
 - Perplexity AI API integration
@@ -40,6 +40,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Settings page with modern UI
 - Comprehensive test pages
 - SVG icons
+- Kuali email generation for workflow steps
+- Automatic step type detection (Approval, Task, Notification)
+- CSUB email template integration
 
 ### Technical Features
 - Firefox extension manifest v2

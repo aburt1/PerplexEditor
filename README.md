@@ -1,20 +1,34 @@
-# PerplexEditor 🔥✍️
+# Andrew's Tools 🛠️
 
-> A powerful Firefox extension that provides AI-powered text editing, rewriting, and enhancement using the Perplexity AI API.
+> A Firefox extension with a collection of useful tools including AI-powered text editing and Kuali email generation.
 
 [![Firefox Add-on](https://img.shields.io/badge/Firefox-Add--on-orange?logo=firefox-browser)](https://addons.mozilla.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](https://github.com/yourusername/perplexeditor/releases)
+[![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](https://github.com/yourusername/andrews-tools/releases)
 
 ---
 
 ## ✨ Features
 
-- **🤖 AI-Powered Editing**: Rewrite, reword, improve, and summarize text using Perplexity AI
-- **🎯 Smart Prompts**: Advanced prompt engineering for better AI responses
-- **🎨 Tone Control**: 8 different tones (formal, casual, friendly, professional, technical, creative, concise)
-- **📏 Length Control**: Adjust output length (shorter, same, longer, concise, detailed)
-- **🔗 Multiple Triggers**: Context menu, toolbar button, keyboard shortcuts
+### 🤖 AI-Powered Text Editing
+- **Text Rewriting**: Make text clearer and more engaging
+- **Text Rewording**: Use different vocabulary while maintaining meaning  
+- **Text Improvement**: Enhance clarity, grammar, and flow
+- **Text Summarization**: Create concise summaries
+- **Smart Prompts**: Advanced prompt engineering for better AI responses
+- **Tone Control**: 8 different tones (formal, casual, friendly, professional, technical, creative, concise)
+- **Length Control**: Adjust output length (shorter, same, longer, concise, detailed)
+
+### 📧 Kuali Email Generation
+- **Workflow Step Detection**: Automatically detects Approval, Task, and Notification steps
+- **CSUB Email Templates**: Uses official CSUB email formatting standards
+- **Auto-Fill Forms**: Automatically populates Kuali form fields
+- **Professional Tone**: Academic workflow appropriate language
+
+### 🔗 Multiple Triggers
+- **Context Menu**: Right-click on selected text
+- **Toolbar Button**: Click extension icon
+- **Keyboard Shortcuts**: Quick access via hotkeys
 - **🌐 Per-Site Context**: Set audience context for specific websites
 - **💾 Format Preservation**: Maintains existing text formatting and symbols
 - **⚡ Cross-Platform**: Works on all platforms where Firefox runs
@@ -28,16 +42,16 @@
 ### Installation
 
 #### Method 1: Download Release (Recommended)
-1. Go to [Releases](https://github.com/yourusername/perplexeditor/releases)
-2. Download the latest `perplexeditor.xpi` file
+1. Go to [Releases](https://github.com/yourusername/andrews-tools/releases)
+2. Download the latest `andrews-tools.xpi` file
 3. Drag and drop the `.xpi` file into Firefox
 4. Click "Add" when prompted
 
 #### Method 2: Load from Source
 1. Clone this repository:
    ```bash
-   git clone https://github.com/yourusername/perplexeditor.git
-   cd perplexeditor
+   git clone https://github.com/yourusername/andrews-tools.git
+   cd andrews-tools
    ```
 2. Open Firefox and go to `about:debugging`
 3. Click "This Firefox" tab
@@ -45,7 +59,7 @@
 5. Select the `manifest.json` file from the cloned directory
 
 ### Setup
-1. After installation, click the PerplexEditor icon in your toolbar
+1. After installation, click the Andrew's Tools icon in your toolbar
 2. Click "Settings" to configure your Perplexity API key
 3. Customize prompts, tones, and site contexts as needed
 4. Start editing text by selecting it and using the context menu!
@@ -61,7 +75,7 @@
   - **Summarize Text**: Create concise summaries
 
 ### Toolbar Button
-- Click the PerplexEditor icon in your toolbar
+- Click the Andrew's Tools icon in your toolbar
 - Choose your desired action from the dropdown menu
 
 ### Keyboard Shortcuts
@@ -153,7 +167,7 @@ git push origin main
 
 # GitHub Actions will automatically:
 # - Build the extension
-# - Package it as perplexeditor.xpi
+# - Package it as andrews-tools.xpi
 # - Create a release with the XPI file
 # - Tag it with a unique identifier
 ```
@@ -196,9 +210,9 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 📞 Support
 
-- **Issues**: [GitHub Issues](https://github.com/yourusername/perplexeditor/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/yourusername/perplexeditor/discussions)
-- **Wiki**: [GitHub Wiki](https://github.com/yourusername/perplexeditor/wiki)
+- **Issues**: [GitHub Issues](https://github.com/yourusername/andrews-tools/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/yourusername/andrews-tools/discussions)
+- **Wiki**: [GitHub Wiki](https://github.com/yourusername/andrews-tools/wiki)
 
 ---
 
