@@ -1132,7 +1132,7 @@ function waitForKualiForm() {
 function findSubjectField() {
   console.log('Searching for Subject field...');
   
-  // Strategy 1: Exact placeholder matches for Email Subject
+  // Strategy 1: Exact placeholder matches for Email Subject (exclude our injected elements)
   const exactSelectors = [
     'input[placeholder="Email Subject"]',
     'input[placeholder*="Email Subject"]',
@@ -1142,15 +1142,20 @@ function findSubjectField() {
   
   for (const selector of exactSelectors) {
     const field = document.querySelector(selector);
-    if (field) {
+    if (field && !isOurInjectedElement(field)) {
       console.log(`Found subject field using exact selector: ${selector}`);
       return field;
     }
   }
   
-  // Strategy 2: Look for fields with "Email Subject" in any attribute
+  // Strategy 2: Look for fields with "Email Subject" in any attribute (exclude our elements)
   const allInputs = document.querySelectorAll('input, textarea');
   for (const input of allInputs) {
+    // Skip our injected elements
+    if (isOurInjectedElement(input)) {
+      continue;
+    }
+    
     // Check placeholder, name, id, aria-label, title
     const placeholder = input.placeholder || '';
     const name = input.name || '';
@@ -1168,15 +1173,20 @@ function findSubjectField() {
     }
   }
   
-  // Strategy 3: Search by nearby text content
+  // Strategy 3: Search by nearby text content (exclude our elements)
   for (const input of allInputs) {
+    // Skip our injected elements
+    if (isOurInjectedElement(input)) {
+      continue;
+    }
+    
     // Look at parent elements for text content
     let element = input.parentElement;
     let depth = 0;
     while (element && depth < 5) { // Look up to 5 levels up
       if (element.textContent) {
         const text = element.textContent.toLowerCase();
-        if (text.includes('email subject') || text.includes('subject')) {
+        if (text.includes('email subject') && !text.includes('email notification context')) {
           console.log(`Found subject field by nearby text (depth ${depth}):`, element.textContent.trim());
           return input;
         }
@@ -1186,34 +1196,38 @@ function findSubjectField() {
     }
   }
   
-  // Strategy 4: Look for labels with "Email Subject"
+  // Strategy 4: Look for labels with "Email Subject" (exclude our elements)
   const labels = document.querySelectorAll('label, span, div');
   for (const label of labels) {
-    if (label.textContent && label.textContent.toLowerCase().includes('email subject')) {
+    if (label.textContent && 
+        label.textContent.toLowerCase().includes('email subject') && 
+        !label.textContent.toLowerCase().includes('email notification context')) {
       // Find the associated input
       const input = label.querySelector('input, textarea') || 
                    label.nextElementSibling?.querySelector('input, textarea') ||
                    label.parentElement?.querySelector('input, textarea');
-      if (input) {
+      if (input && !isOurInjectedElement(input)) {
         console.log('Found subject field by label with "Email Subject":', label.textContent.trim());
         return input;
       }
     }
   }
   
-  // Strategy 5: Debug - log all inputs and their attributes
-  console.log('Debug: All input fields with details:');
+  // Strategy 5: Debug - log all inputs and their attributes (excluding ours)
+  console.log('Debug: All input fields with details (excluding our injected elements):');
   allInputs.forEach((input, index) => {
-    console.log(`Input ${index}:`, {
-      tagName: input.tagName,
-      placeholder: input.placeholder,
-      name: input.name,
-      id: input.id,
-      type: input.type,
-      ariaLabel: input.getAttribute('aria-label'),
-      title: input.title,
-      parentText: input.parentElement?.textContent?.substring(0, 100)
-    });
+    if (!isOurInjectedElement(input)) {
+      console.log(`Input ${index}:`, {
+        tagName: input.tagName,
+        placeholder: input.placeholder,
+        name: input.name,
+        id: input.id,
+        type: input.type,
+        ariaLabel: input.getAttribute('aria-label'),
+        title: input.title,
+        parentText: input.parentElement?.textContent?.substring(0, 100)
+      });
+    }
   });
   
   return null;
@@ -1223,7 +1237,7 @@ function findSubjectField() {
 function findBodyField() {
   console.log('Searching for Body field...');
   
-  // Strategy 1: Exact placeholder matches for Email Body
+  // Strategy 1: Exact placeholder matches for Email Body (exclude our injected elements)
   const exactSelectors = [
     'textarea[placeholder="Email Body"]',
     'textarea[placeholder*="Email Body"]',
@@ -1233,15 +1247,20 @@ function findBodyField() {
   
   for (const selector of exactSelectors) {
     const field = document.querySelector(selector);
-    if (field) {
+    if (field && !isOurInjectedElement(field)) {
       console.log(`Found body field using exact selector: ${selector}`);
       return field;
     }
   }
   
-  // Strategy 2: Look for fields with "Email Body" in any attribute
+  // Strategy 2: Look for fields with "Email Body" in any attribute (exclude our elements)
   const allTextareas = document.querySelectorAll('textarea');
   for (const textarea of allTextareas) {
+    // Skip our injected elements
+    if (isOurInjectedElement(textarea)) {
+      continue;
+    }
+    
     // Check placeholder, name, id, aria-label, title
     const placeholder = textarea.placeholder || '';
     const name = textarea.name || '';
@@ -1259,15 +1278,20 @@ function findBodyField() {
     }
   }
   
-  // Strategy 3: Search by nearby text content
+  // Strategy 3: Search by nearby text content (exclude our elements)
   for (const textarea of allTextareas) {
+    // Skip our injected elements
+    if (isOurInjectedElement(textarea)) {
+      continue;
+    }
+    
     // Look at parent elements for text content
     let element = textarea.parentElement;
     let depth = 0;
     while (element && depth < 5) { // Look up to 5 levels up
       if (element.textContent) {
         const text = element.textContent.toLowerCase();
-        if (text.includes('email body') || text.includes('body')) {
+        if (text.includes('email body') && !text.includes('email notification context')) {
           console.log(`Found body field by nearby text (depth ${depth}):`, element.textContent.trim());
           return textarea;
         }
@@ -1277,42 +1301,47 @@ function findBodyField() {
     }
   }
   
-  // Strategy 4: Look for labels with "Email Body"
+  // Strategy 4: Look for labels with "Email Body" (exclude our elements)
   const labels = document.querySelectorAll('label, span, div');
   for (const label of labels) {
-    if (label.textContent && label.textContent.toLowerCase().includes('email body')) {
+    if (label.textContent && 
+        label.textContent.toLowerCase().includes('email body') && 
+        !label.textContent.toLowerCase().includes('email notification context')) {
       // Find the associated textarea
       const textarea = label.querySelector('textarea') || 
                       label.nextElementSibling?.querySelector('textarea') ||
                       label.parentElement?.querySelector('textarea');
-      if (textarea) {
+      if (textarea && !isOurInjectedElement(textarea)) {
         console.log('Found body field by label with "Email Body":', label.textContent.trim());
         return textarea;
       }
     }
   }
   
-  // Strategy 5: Look for the largest textarea (often the main content field)
-  if (allTextareas.length > 0) {
-    const largestTextarea = Array.from(allTextareas).reduce((largest, current) => {
+  // Strategy 5: Look for the largest textarea (often the main content field) - exclude ours
+  const validTextareas = Array.from(allTextareas).filter(textarea => !isOurInjectedElement(textarea));
+  if (validTextareas.length > 0) {
+    const largestTextarea = validTextareas.reduce((largest, current) => {
       return (current.offsetHeight * current.offsetWidth) > (largest.offsetHeight * largest.offsetWidth) ? current : largest;
     });
-    console.log('Using largest textarea as body field:', largestTextarea);
+    console.log('Using largest textarea as body field (excluding our elements):', largestTextarea);
     return largestTextarea;
   }
   
-  // Strategy 6: Debug - log all textareas and their attributes
-  console.log('Debug: All textarea fields with details:');
+  // Strategy 6: Debug - log all textareas and their attributes (excluding ours)
+  console.log('Debug: All textarea fields with details (excluding our injected elements):');
   allTextareas.forEach((textarea, index) => {
-    console.log(`Textarea ${index}:`, {
-      placeholder: textarea.placeholder,
-      name: textarea.name,
-      id: textarea.id,
-      ariaLabel: textarea.getAttribute('aria-label'),
-      title: textarea.title,
-      parentText: textarea.parentElement?.textContent?.substring(0, 100),
-      size: `${textarea.offsetWidth}x${textarea.offsetHeight}`
-    });
+    if (!isOurInjectedElement(textarea)) {
+      console.log(`Textarea ${index}:`, {
+        placeholder: textarea.placeholder,
+        name: textarea.name,
+        id: textarea.id,
+        ariaLabel: textarea.getAttribute('aria-label'),
+        title: textarea.title,
+        parentText: textarea.parentElement?.textContent?.substring(0, 100),
+        size: `${textarea.offsetWidth}x${textarea.offsetHeight}`
+      });
+    }
   });
   
   return null;
@@ -1328,6 +1357,32 @@ function triggerFieldEvents(field) {
   // Also try to focus and blur the field
   field.focus();
   setTimeout(() => field.blur(), 100);
+}
+
+// Helper function to check if an element is one of our injected elements
+function isOurInjectedElement(element) {
+  // Check if it's our injected context input
+  if (element.id === 'kuali-context-input') {
+    return true;
+  }
+  
+  // Check if it's inside our injected context input
+  if (element.closest('#kuali-context-input')) {
+    return true;
+  }
+  
+  // Check if it's the step label field (which we don't want to fill)
+  if (element.placeholder && element.placeholder.toLowerCase().includes('step label')) {
+    return true;
+  }
+  
+  // Check if it's near our injected elements
+  const parent = element.parentElement;
+  if (parent && parent.textContent && parent.textContent.toLowerCase().includes('email notification context')) {
+    return true;
+  }
+  
+  return false;
 }
 
 // Retry mechanism for React dynamic loading
