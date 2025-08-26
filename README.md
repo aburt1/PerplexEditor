@@ -164,7 +164,7 @@ git push origin main
 - **Dependency Management**: Uses `npm ci` for reliable builds
 - **Smart Packaging**: Excludes development files and documentation from the XPI
 - **Professional Releases**: Creates detailed release notes with installation instructions
-- **Unique Releases**: Each commit gets its own release with commit hash and timestamp
+- **Reliable Process**: Uses proven GitHub Actions for stable release creation
 
 ### Development Workflow
 1. Make changes to source files

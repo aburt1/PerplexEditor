@@ -6,7 +6,7 @@
   "scripts": {
     "build": "echo 'Building extension...' && echo 'Extension built successfully!'",
     "install": "echo 'To install: Load manifest.json as temporary add-on in Firefox'",
-    "package": "zip -r perplexeditor.xpi . -x '*.git*' '*.DS_Store' 'node_modules/*' 'package*.json' 'README.md' 'CHANGELOG.md' 'LICENSE' 'install*.sh' 'install*.bat' 'test*.html' '.github/*'",
+    "package": "zip -r perplexeditor.xpi . -x '*.git*' '*.DS_Store' 'node_modules/*' 'package*.json' 'README.md' 'CHANGELOG.md' 'LICENSE' '.github/*'",
     "build:extension": "npm run build && npm run package"
   },
       "keywords": [
