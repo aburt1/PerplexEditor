@@ -1027,109 +1027,194 @@ function displayKualiNotificationResult(result) {
 function fillKualiFormFieldsDirectly(fields) {
   console.log('Directly filling Kuali form fields with:', fields);
   
-  try {
-    let filledCount = 0;
-    const filledFields = [];
-    
-    // Strategy 1: Look for Subject field (Email Subject)
-    if (fields.SUBJECT) {
-      const subjectField = findSubjectField();
-      if (subjectField) {
-        subjectField.value = fields.SUBJECT;
-        triggerFieldEvents(subjectField);
-        console.log(`Filled SUBJECT field with: "${fields.SUBJECT}"`);
-        filledCount++;
-        filledFields.push('SUBJECT');
-      } else {
-        console.log('Subject field not found, will retry...');
+  // First, wait for the Kuali form to be fully loaded
+  waitForKualiForm().then(() => {
+    try {
+      let filledCount = 0;
+      const filledFields = [];
+      
+      // Strategy 1: Look for Subject field (Email Subject)
+      if (fields.SUBJECT) {
+        const subjectField = findSubjectField();
+        if (subjectField) {
+          subjectField.value = fields.SUBJECT;
+          triggerFieldEvents(subjectField);
+          console.log(`Filled SUBJECT field with: "${fields.SUBJECT}"`);
+          filledCount++;
+          filledFields.push('SUBJECT');
+        } else {
+          console.log('Subject field not found, will retry...');
+        }
       }
-    }
-    
-    // Strategy 2: Look for Body field (Email Body)
-    if (fields.BODY) {
-      const bodyField = findBodyField();
-      if (bodyField) {
-        bodyField.value = fields.BODY;
-        triggerFieldEvents(bodyField);
-        console.log(`Filled BODY field with: "${fields.BODY}"`);
-        filledCount++;
-        filledFields.push('BODY');
-      } else {
-        console.log('Body field not found, will retry...');
+      
+      // Strategy 2: Look for Body field (Email Body)
+      if (fields.BODY) {
+        const bodyField = findBodyField();
+        if (bodyField) {
+          bodyField.value = fields.BODY;
+          triggerFieldEvents(bodyField);
+          console.log(`Filled BODY field with: "${fields.BODY}"`);
+          filledCount++;
+          filledFields.push('BODY');
+        } else {
+          console.log('Body field not found, will retry...');
+        }
       }
-    }
-    
-    if (filledCount > 0) {
-      console.log(`Successfully filled ${filledCount} fields: ${filledFields.join(', ')}`);
-      return true;
-    } else {
-      console.log('No fields could be filled, setting up retry mechanism...');
-      // Set up retry mechanism for React dynamic loading
-      setupRetryForFields(fields);
+      
+      if (filledCount > 0) {
+        console.log(`Successfully filled ${filledCount} fields: ${filledFields.join(', ')}`);
+        showNotification(`Successfully filled ${filledCount} form fields!`, 'success');
+        return true;
+      } else {
+        console.log('No fields could be filled, setting up retry mechanism...');
+        // Set up retry mechanism for React dynamic loading
+        setupRetryForFields(fields);
+        return false;
+      }
+      
+    } catch (error) {
+      console.error('Error filling Kuali form fields:', error);
       return false;
     }
+  });
+  
+  return false; // Return false initially since we're using async
+}
+
+// Function to wait for Kuali form to be fully loaded
+function waitForKualiForm() {
+  return new Promise((resolve) => {
+    // Check if form is already loaded
+    if (document.querySelector('input[placeholder*="Email Subject"], textarea[placeholder*="Email Body"]')) {
+      console.log('Kuali form already loaded');
+      resolve();
+      return;
+    }
     
-  } catch (error) {
-    console.error('Error filling Kuali form fields:', error);
-    return false;
-  }
+    console.log('Waiting for Kuali form to load...');
+    
+    // Set up observer to watch for form elements
+    const observer = new MutationObserver((mutations) => {
+      for (const mutation of mutations) {
+        if (mutation.type === 'childList') {
+          // Check if the form fields have appeared
+          if (document.querySelector('input[placeholder*="Email Subject"], textarea[placeholder*="Email Body"]')) {
+            console.log('Kuali form detected, resolving promise');
+            observer.disconnect();
+            resolve();
+            return;
+          }
+        }
+      }
+    });
+    
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true
+    });
+    
+    // Also try to resolve after a timeout in case the observer doesn't catch it
+    setTimeout(() => {
+      if (document.querySelector('input[placeholder*="Email Subject"], textarea[placeholder*="Email Body"]')) {
+        console.log('Kuali form detected via timeout');
+        observer.disconnect();
+        resolve();
+      } else {
+        console.log('Timeout reached, proceeding anyway');
+        observer.disconnect();
+        resolve();
+      }
+    }, 3000);
+  });
 }
 
 // Helper function to find the Subject field
 function findSubjectField() {
   console.log('Searching for Subject field...');
   
-  // Strategy 1: Multiple selectors
-  const selectors = [
+  // Strategy 1: Exact placeholder matches for Email Subject
+  const exactSelectors = [
+    'input[placeholder="Email Subject"]',
     'input[placeholder*="Email Subject"]',
-    'input[placeholder*="Subject"]',
-    'input[placeholder*="Notification"]',
-    'input[name*="subject"]',
-    'input[id*="subject"]',
-    'textarea[placeholder*="Subject"]',
-    'input[placeholder*="Title"]',
-    'input[placeholder*="Name"]'
+    'input[placeholder*="email subject"]',
+    'input[placeholder*="EMAIL SUBJECT"]'
   ];
   
-  for (const selector of selectors) {
+  for (const selector of exactSelectors) {
     const field = document.querySelector(selector);
     if (field) {
-      console.log(`Found subject field using selector: ${selector}`);
+      console.log(`Found subject field using exact selector: ${selector}`);
       return field;
     }
   }
   
-  // Strategy 2: Search by text content near the field
+  // Strategy 2: Look for fields with "Email Subject" in any attribute
   const allInputs = document.querySelectorAll('input, textarea');
   for (const input of allInputs) {
-    const parent = input.parentElement;
-    if (parent && parent.textContent && 
-        (parent.textContent.toLowerCase().includes('subject') || 
-         parent.textContent.toLowerCase().includes('email subject') ||
-         parent.textContent.toLowerCase().includes('notification'))) {
-      console.log('Found subject field by parent text content:', parent.textContent);
+    // Check placeholder, name, id, aria-label, title
+    const placeholder = input.placeholder || '';
+    const name = input.name || '';
+    const id = input.id || '';
+    const ariaLabel = input.getAttribute('aria-label') || '';
+    const title = input.title || '';
+    
+    if (placeholder.toLowerCase().includes('email subject') ||
+        name.toLowerCase().includes('email subject') ||
+        id.toLowerCase().includes('email subject') ||
+        ariaLabel.toLowerCase().includes('email subject') ||
+        title.toLowerCase().includes('email subject')) {
+      console.log(`Found subject field by attribute search:`, { placeholder, name, id, ariaLabel, title });
       return input;
     }
   }
   
-  // Strategy 3: Look for labels near inputs
-  const labels = document.querySelectorAll('label');
+  // Strategy 3: Search by nearby text content
+  for (const input of allInputs) {
+    // Look at parent elements for text content
+    let element = input.parentElement;
+    let depth = 0;
+    while (element && depth < 5) { // Look up to 5 levels up
+      if (element.textContent) {
+        const text = element.textContent.toLowerCase();
+        if (text.includes('email subject') || text.includes('subject')) {
+          console.log(`Found subject field by nearby text (depth ${depth}):`, element.textContent.trim());
+          return input;
+        }
+      }
+      element = element.parentElement;
+      depth++;
+    }
+  }
+  
+  // Strategy 4: Look for labels with "Email Subject"
+  const labels = document.querySelectorAll('label, span, div');
   for (const label of labels) {
-    if (label.textContent && 
-        (label.textContent.toLowerCase().includes('subject') || 
-         label.textContent.toLowerCase().includes('email subject'))) {
+    if (label.textContent && label.textContent.toLowerCase().includes('email subject')) {
+      // Find the associated input
       const input = label.querySelector('input, textarea') || 
                    label.nextElementSibling?.querySelector('input, textarea') ||
                    label.parentElement?.querySelector('input, textarea');
       if (input) {
-        console.log('Found subject field by label:', label.textContent);
+        console.log('Found subject field by label with "Email Subject":', label.textContent.trim());
         return input;
       }
     }
   }
   
-  // Strategy 4: Debug - log all inputs to see what's available
-  console.log('Debug: All input fields found:', document.querySelectorAll('input, textarea'));
+  // Strategy 5: Debug - log all inputs and their attributes
+  console.log('Debug: All input fields with details:');
+  allInputs.forEach((input, index) => {
+    console.log(`Input ${index}:`, {
+      tagName: input.tagName,
+      placeholder: input.placeholder,
+      name: input.name,
+      id: input.id,
+      type: input.type,
+      ariaLabel: input.getAttribute('aria-label'),
+      title: input.title,
+      parentText: input.parentElement?.textContent?.substring(0, 100)
+    });
+  });
   
   return null;
 }
@@ -1138,61 +1223,76 @@ function findSubjectField() {
 function findBodyField() {
   console.log('Searching for Body field...');
   
-  // Strategy 1: Multiple selectors
-  const selectors = [
+  // Strategy 1: Exact placeholder matches for Email Body
+  const exactSelectors = [
+    'textarea[placeholder="Email Body"]',
     'textarea[placeholder*="Email Body"]',
-    'textarea[placeholder*="Body"]',
-    'textarea[placeholder*="Message"]',
-    'textarea[name*="body"]',
-    'textarea[name*="message"]',
-    'textarea[id*="body"]',
-    'textarea[id*="message"]',
-    'input[placeholder*="Email Body"]',
-    'input[placeholder*="Body"]',
-    'textarea[placeholder*="Content"]',
-    'textarea[placeholder*="Text"]'
+    'textarea[placeholder*="email body"]',
+    'textarea[placeholder*="EMAIL BODY"]'
   ];
   
-  for (const selector of selectors) {
+  for (const selector of exactSelectors) {
     const field = document.querySelector(selector);
     if (field) {
-      console.log(`Found body field using selector: ${selector}`);
+      console.log(`Found body field using exact selector: ${selector}`);
       return field;
     }
   }
   
-  // Strategy 2: Search by text content near the field
+  // Strategy 2: Look for fields with "Email Body" in any attribute
   const allTextareas = document.querySelectorAll('textarea');
   for (const textarea of allTextareas) {
-    const parent = textarea.parentElement;
-    if (parent && parent.textContent && 
-        (parent.textContent.toLowerCase().includes('body') || 
-         parent.textContent.toLowerCase().includes('email body') || 
-         parent.textContent.toLowerCase().includes('message') ||
-         parent.textContent.toLowerCase().includes('content'))) {
-      console.log('Found body field by parent text content:', parent.textContent);
+    // Check placeholder, name, id, aria-label, title
+    const placeholder = textarea.placeholder || '';
+    const name = textarea.name || '';
+    const id = textarea.id || '';
+    const ariaLabel = textarea.getAttribute('aria-label') || '';
+    const title = textarea.title || '';
+    
+    if (placeholder.toLowerCase().includes('email body') ||
+        name.toLowerCase().includes('email body') ||
+        id.toLowerCase().includes('email body') ||
+        ariaLabel.toLowerCase().includes('email body') ||
+        title.toLowerCase().includes('email body')) {
+      console.log(`Found body field by attribute search:`, { placeholder, name, id, ariaLabel, title });
       return textarea;
     }
   }
   
-  // Strategy 3: Look for labels near textareas
-  const labels = document.querySelectorAll('label');
+  // Strategy 3: Search by nearby text content
+  for (const textarea of allTextareas) {
+    // Look at parent elements for text content
+    let element = textarea.parentElement;
+    let depth = 0;
+    while (element && depth < 5) { // Look up to 5 levels up
+      if (element.textContent) {
+        const text = element.textContent.toLowerCase();
+        if (text.includes('email body') || text.includes('body')) {
+          console.log(`Found body field by nearby text (depth ${depth}):`, element.textContent.trim());
+          return textarea;
+        }
+      }
+      element = element.parentElement;
+      depth++;
+    }
+  }
+  
+  // Strategy 4: Look for labels with "Email Body"
+  const labels = document.querySelectorAll('label, span, div');
   for (const label of labels) {
-    if (label.textContent && 
-        (label.textContent.toLowerCase().includes('body') || 
-         label.textContent.toLowerCase().includes('email body') ||
-         label.textContent.toLowerCase().includes('message'))) {
+    if (label.textContent && label.textContent.toLowerCase().includes('email body')) {
+      // Find the associated textarea
       const textarea = label.querySelector('textarea') || 
                       label.nextElementSibling?.querySelector('textarea') ||
                       label.parentElement?.querySelector('textarea');
       if (textarea) {
-        console.log('Found body field by label:', label.textContent);
+        console.log('Found body field by label with "Email Body":', label.textContent.trim());
         return textarea;
       }
     }
   }
   
-  // Strategy 4: Look for the largest textarea (often the main content field)
+  // Strategy 5: Look for the largest textarea (often the main content field)
   if (allTextareas.length > 0) {
     const largestTextarea = Array.from(allTextareas).reduce((largest, current) => {
       return (current.offsetHeight * current.offsetWidth) > (largest.offsetHeight * largest.offsetWidth) ? current : largest;
@@ -1201,8 +1301,19 @@ function findBodyField() {
     return largestTextarea;
   }
   
-  // Strategy 5: Debug - log all textareas to see what's available
-  console.log('Debug: All textarea fields found:', allTextareas);
+  // Strategy 6: Debug - log all textareas and their attributes
+  console.log('Debug: All textarea fields with details:');
+  allTextareas.forEach((textarea, index) => {
+    console.log(`Textarea ${index}:`, {
+      placeholder: textarea.placeholder,
+      name: textarea.name,
+      id: textarea.id,
+      ariaLabel: textarea.getAttribute('aria-label'),
+      title: textarea.title,
+      parentText: textarea.parentElement?.textContent?.substring(0, 100),
+      size: `${textarea.offsetWidth}x${textarea.offsetHeight}`
+    });
+  });
   
   return null;
 }
