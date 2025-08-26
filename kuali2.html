@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" /><script>
+  var ChurnZero = ChurnZero || []
+  ;(function () {
+    var cz = document.createElement('script')
+    cz.type = 'text/javascript'
+    cz.async = true
+    cz.src = 'https://analytics.churnzero.net/churnzero.js'
+    var s = document.getElementsByTagName('script')[0]
+    s.parentNode.insertBefore(cz, s)
+  })()
+
+  ChurnZero.push([
+    'setAppKey',
+    '1!I-hdFRh-3qVvc2H4ZMFNW9PnURAu5aMkMHAgv2gNnkMt6AD'
+  ])
+
+  const setAdminAttribute = () => {
+    if (
+      window.location.pathname.startsWith('/form') ||
+      window.location.pathname.startsWith('/workflow') ||
+      window.location.pathname.startsWith('/publish')
+    ) {
+      ChurnZero.push(['setAttribute', 'contact', 'BuildNps', true])
+    }
+  }
+  window.addEventListener('routechange', setAdminAttribute)
+  ;(function () {
+    if (window.loggedInUser) {
+      ChurnZero.push([
+        'setContact',
+        window.location.hostname,
+        window.loggedInUser.id
+      ])
+      setAdminAttribute()
+      return
+    }
+    const cookie = (document.cookie || '')
+      .split(/\s*;\s*/g)
+      .reduce((map, item) => {
+        const splitIndex = item.indexOf('=')
+        if (splitIndex !== -1) {
+          const key = item.substring(0, splitIndex)
+          const value = decodeURIComponent(item.substring(splitIndex + 1))
+          map[key] = value
+        }
+        return map
+      }, {})
+    if (cookie.authToken) {
+      fetch('/api/v1/users/current', {
+        headers: {
+          Authorization: `Bearer ${cookie.authToken}`
+        }
+      })
+        .then(res => res.json())
+        .then(user => {
+          window.loggedInUser = user
+          ChurnZero.push(['setContact', window.location.hostname, user.id])
+          setAdminAttribute()
+        })
+    }
+  })()
+</script>
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, shrink-to-fit=no"
+    />
+    <meta name="theme-color" content="#000000" />
+    <meta name="google" content="notranslate" />
+    <link rel="icon" href="//d2qxjspa0v9y79.cloudfront.net/favicon.ico" />
+    <link href="//d2qxjspa0v9y79.cloudfront.net/fonts/roboto/index.css" rel="stylesheet" media="all" />
+    <link href="//d2qxjspa0v9y79.cloudfront.net/fonts/poppins/index.css" rel="stylesheet" media="all" />
+    <title>Kuali</title>
+    <script type="module" crossorigin src="//d2qxjspa0v9y79.cloudfront.net/assets/index-q_ynqGT6.js"></script>
+    <link rel="stylesheet" crossorigin href="//d2qxjspa0v9y79.cloudfront.net/assets/index-DimDus6W.css">
+  </head>
+
+  <body>
+    <div id="root"></div>
+    <div id="datepicker-portal"></div>
+    <div id="flume-context-menu"></div>
+  </body>
+</html>
+<!--a3VhbGkK-->

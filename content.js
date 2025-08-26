@@ -1040,6 +1040,8 @@ function fillKualiFormFieldsDirectly(fields) {
         console.log(`Filled SUBJECT field with: "${fields.SUBJECT}"`);
         filledCount++;
         filledFields.push('SUBJECT');
+      } else {
+        console.log('Subject field not found, will retry...');
       }
     }
     
@@ -1052,6 +1054,8 @@ function fillKualiFormFieldsDirectly(fields) {
         console.log(`Filled BODY field with: "${fields.BODY}"`);
         filledCount++;
         filledFields.push('BODY');
+      } else {
+        console.log('Body field not found, will retry...');
       }
     }
     
@@ -1059,7 +1063,9 @@ function fillKualiFormFieldsDirectly(fields) {
       console.log(`Successfully filled ${filledCount} fields: ${filledFields.join(', ')}`);
       return true;
     } else {
-      console.log('No fields could be filled');
+      console.log('No fields could be filled, setting up retry mechanism...');
+      // Set up retry mechanism for React dynamic loading
+      setupRetryForFields(fields);
       return false;
     }
     
@@ -1071,14 +1077,18 @@ function fillKualiFormFieldsDirectly(fields) {
 
 // Helper function to find the Subject field
 function findSubjectField() {
-  // Multiple strategies to find the subject field
+  console.log('Searching for Subject field...');
+  
+  // Strategy 1: Multiple selectors
   const selectors = [
     'input[placeholder*="Email Subject"]',
     'input[placeholder*="Subject"]',
     'input[placeholder*="Notification"]',
     'input[name*="subject"]',
     'input[id*="subject"]',
-    'textarea[placeholder*="Subject"]'
+    'textarea[placeholder*="Subject"]',
+    'input[placeholder*="Title"]',
+    'input[placeholder*="Name"]'
   ];
   
   for (const selector of selectors) {
@@ -1089,23 +1099,46 @@ function findSubjectField() {
     }
   }
   
-  // Fallback: search by text content near the field
+  // Strategy 2: Search by text content near the field
   const allInputs = document.querySelectorAll('input, textarea');
   for (const input of allInputs) {
     const parent = input.parentElement;
     if (parent && parent.textContent && 
-        (parent.textContent.includes('Subject') || parent.textContent.includes('Email Subject'))) {
-      console.log('Found subject field by parent text content');
+        (parent.textContent.toLowerCase().includes('subject') || 
+         parent.textContent.toLowerCase().includes('email subject') ||
+         parent.textContent.toLowerCase().includes('notification'))) {
+      console.log('Found subject field by parent text content:', parent.textContent);
       return input;
     }
   }
+  
+  // Strategy 3: Look for labels near inputs
+  const labels = document.querySelectorAll('label');
+  for (const label of labels) {
+    if (label.textContent && 
+        (label.textContent.toLowerCase().includes('subject') || 
+         label.textContent.toLowerCase().includes('email subject'))) {
+      const input = label.querySelector('input, textarea') || 
+                   label.nextElementSibling?.querySelector('input, textarea') ||
+                   label.parentElement?.querySelector('input, textarea');
+      if (input) {
+        console.log('Found subject field by label:', label.textContent);
+        return input;
+      }
+    }
+  }
+  
+  // Strategy 4: Debug - log all inputs to see what's available
+  console.log('Debug: All input fields found:', document.querySelectorAll('input, textarea'));
   
   return null;
 }
 
 // Helper function to find the Body field
 function findBodyField() {
-  // Multiple strategies to find the body field
+  console.log('Searching for Body field...');
+  
+  // Strategy 1: Multiple selectors
   const selectors = [
     'textarea[placeholder*="Email Body"]',
     'textarea[placeholder*="Body"]',
@@ -1115,7 +1148,9 @@ function findBodyField() {
     'textarea[id*="body"]',
     'textarea[id*="message"]',
     'input[placeholder*="Email Body"]',
-    'input[placeholder*="Body"]'
+    'input[placeholder*="Body"]',
+    'textarea[placeholder*="Content"]',
+    'textarea[placeholder*="Text"]'
   ];
   
   for (const selector of selectors) {
@@ -1126,16 +1161,48 @@ function findBodyField() {
     }
   }
   
-  // Fallback: search by text content near the field
+  // Strategy 2: Search by text content near the field
   const allTextareas = document.querySelectorAll('textarea');
   for (const textarea of allTextareas) {
     const parent = textarea.parentElement;
     if (parent && parent.textContent && 
-        (parent.textContent.includes('Body') || parent.textContent.includes('Email Body') || parent.textContent.includes('Message'))) {
-      console.log('Found body field by parent text content');
+        (parent.textContent.toLowerCase().includes('body') || 
+         parent.textContent.toLowerCase().includes('email body') || 
+         parent.textContent.toLowerCase().includes('message') ||
+         parent.textContent.toLowerCase().includes('content'))) {
+      console.log('Found body field by parent text content:', parent.textContent);
       return textarea;
     }
   }
+  
+  // Strategy 3: Look for labels near textareas
+  const labels = document.querySelectorAll('label');
+  for (const label of labels) {
+    if (label.textContent && 
+        (label.textContent.toLowerCase().includes('body') || 
+         label.textContent.toLowerCase().includes('email body') ||
+         label.textContent.toLowerCase().includes('message'))) {
+      const textarea = label.querySelector('textarea') || 
+                      label.nextElementSibling?.querySelector('textarea') ||
+                      label.parentElement?.querySelector('textarea');
+      if (textarea) {
+        console.log('Found body field by label:', label.textContent);
+        return textarea;
+      }
+    }
+  }
+  
+  // Strategy 4: Look for the largest textarea (often the main content field)
+  if (allTextareas.length > 0) {
+    const largestTextarea = Array.from(allTextareas).reduce((largest, current) => {
+      return (current.offsetHeight * current.offsetWidth) > (largest.offsetHeight * largest.offsetWidth) ? current : largest;
+    });
+    console.log('Using largest textarea as body field:', largestTextarea);
+    return largestTextarea;
+  }
+  
+  // Strategy 5: Debug - log all textareas to see what's available
+  console.log('Debug: All textarea fields found:', allTextareas);
   
   return null;
 }
@@ -1150,6 +1217,61 @@ function triggerFieldEvents(field) {
   // Also try to focus and blur the field
   field.focus();
   setTimeout(() => field.blur(), 100);
+}
+
+// Retry mechanism for React dynamic loading
+function setupRetryForFields(fields) {
+  if (window.kualiRetryTimer) {
+    clearTimeout(window.kualiRetryTimer);
+  }
+  
+  let attempts = 0;
+  const maxAttempts = 10;
+  
+  const retryFill = () => {
+    attempts++;
+    console.log(`Retry attempt ${attempts} for filling fields...`);
+    
+    // Try to fill fields again
+    let filledCount = 0;
+    
+    if (fields.SUBJECT) {
+      const subjectField = findSubjectField();
+      if (subjectField) {
+        subjectField.value = fields.SUBJECT;
+        triggerFieldEvents(subjectField);
+        console.log(`Retry: Filled SUBJECT field with: "${fields.SUBJECT}"`);
+        filledCount++;
+      }
+    }
+    
+    if (fields.BODY) {
+      const bodyField = findBodyField();
+      if (bodyField) {
+        bodyField.value = fields.BODY;
+        triggerFieldEvents(bodyField);
+        console.log(`Retry: Filled BODY field with: "${fields.BODY}"`);
+        filledCount++;
+      }
+    }
+    
+    if (filledCount > 0) {
+      console.log(`Retry successful: filled ${filledCount} fields`);
+      showNotification(`Successfully filled ${filledCount} form fields after retry!`, 'success');
+      return;
+    }
+    
+    if (attempts < maxAttempts) {
+      // Try again in 1 second
+      window.kualiRetryTimer = setTimeout(retryFill, 1000);
+    } else {
+      console.log('Max retry attempts reached, fields still not found');
+      showNotification('Could not find form fields after multiple attempts. Please check if the notification form is fully loaded.', 'warning');
+    }
+  };
+  
+  // Start retrying after a short delay
+  window.kualiRetryTimer = setTimeout(retryFill, 500);
 }
 
 // Automatic injection for Kuali pages
