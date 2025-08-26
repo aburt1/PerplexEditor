@@ -1,16 +1,15 @@
-name: Build and Release Firefox Extension
+name: Upload XPI Asset
 
 on:
   push:
     branches:
-      - '**' # Trigger on any branch push
+      - '**'
 
 permissions:
   contents: write
-  actions: read
 
 jobs:
-  build-and-release:
+  upload:
     runs-on: ubuntu-latest
     
     steps:
@@ -44,20 +43,12 @@ jobs:
             -x 'test*.html' \
             -x '.github/*'
             
-      - name: List files for debugging
-        run: |
-          echo "Current directory contents:"
-          ls -la
-          echo "XPI file details:"
-          ls -la *.xpi || echo "No XPI file found"
-          
-      - name: Create Release using GitHub CLI
-        run: |
-          # Create a release using GitHub CLI (more reliable than the action)
-          gh release create "release-$(date +%Y%m%d-%H%M%S)" \
-            --title "Release $(date +%Y-%m-%d %H:%M:%S)" \
-            --notes "Automated release from GitHub Actions - Commit: ${{ github.sha }}" \
-            --repo ${{ github.repository }} \
-            perplexeditor.xpi
+      - name: Upload XPI as Release Asset
+        uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ github.event.repository.releases_url }}
+          asset_path: ./perplexeditor.xpi
+          asset_name: perplexeditor.xpi
+          asset_content_type: application/x-xpinstall
