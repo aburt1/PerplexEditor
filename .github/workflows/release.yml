@@ -1,0 +1,53 @@
+name: Build and Release Extension
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        
+    - name: Install dependencies
+      run: npm install
+      
+    - name: Build extension package
+      run: npm run package
+      
+    - name: Create release
+      uses: softprops/action-gh-release@v1
+      with:
+        files: perplexeditor.xpi
+        name: Release ${{ github.ref_name }}
+        body: |
+          ## What's New
+          
+          This release includes:
+          - Bug fixes and improvements
+          - Enhanced prompt engineering
+          - Better selection handling
+          
+          ## Installation
+          
+          1. Download the `perplexeditor.xpi` file above
+          2. Drag and drop it into Firefox
+          3. Click "Add" when prompted
+          
+          ## Changes
+          
+          See the [changelog](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md) for detailed information.
+          
+        draft: false
+        prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

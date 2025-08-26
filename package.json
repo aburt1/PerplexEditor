@@ -1,0 +1,32 @@
+{
+  "name": "perplexeditor",
+  "version": "1.0.0",
+  "description": "A Firefox extension for AI-powered text editing, rewriting, and enhancement using Perplexity AI",
+  "main": "manifest.json",
+  "scripts": {
+    "build": "echo 'Building extension...' && echo 'Please replace placeholder icons with actual PNG files'",
+    "install": "echo 'To install: Load manifest.json as temporary add-on in Firefox'",
+    "package": "zip -r perplexeditor.xpi . -x '*.git*' '*.DS_Store' 'node_modules/*' 'package*.json' 'README.md'"
+  },
+      "keywords": [
+      "firefox-extension",
+      "ai-text-editor",
+      "text-rewriting",
+      "ai",
+      "perplexity",
+      "context-menu",
+      "text-editing"
+    ],
+  "author": "Your Name",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/text-rewriter-pro.git"
+  },
+  "bugs": {
+    "url": "https://github.com/yourusername/text-rewriter-pro/issues"
+  },
+  "homepage": "https://github.com/yourusername/text-rewriter-pro#readme",
+  "devDependencies": {},
+  "dependencies": {}
+}

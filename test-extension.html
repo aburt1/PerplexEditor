@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>PerplexEditor - Extension Test</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: #f8fafc;
+      color: #0f172a;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      padding: 20px;
+    }
+    
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background: #ffffff;
+      border-radius: 12px;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+    }
+    
+    .header {
+      background: #0f172a;
+      color: #ffffff;
+      padding: 24px;
+      text-align: center;
+    }
+    
+    .header h1 {
+      font-size: 28px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+    
+    .header p {
+      color: #cbd5e1;
+      font-size: 16px;
+    }
+    
+    .content {
+      padding: 32px;
+    }
+    
+    .test-section {
+      margin-bottom: 32px;
+    }
+    
+    .test-section h2 {
+      font-size: 20px;
+      font-weight: 600;
+      color: #111827;
+      margin-bottom: 16px;
+      padding-bottom: 8px;
+      border-bottom: 2px solid #e5e7eb;
+    }
+    
+    .text-input {
+      width: 100%;
+      min-height: 120px;
+      padding: 16px;
+      border: 2px solid #e2e8f0;
+      border-radius: 8px;
+      font-size: 16px;
+      font-family: inherit;
+      line-height: 1.5;
+      resize: vertical;
+      margin-bottom: 16px;
+    }
+    
+    .text-input:focus {
+      outline: none;
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+    
+    .sample-texts {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 24px;
+    }
+    
+    .sample-btn {
+      background: #f1f5f9;
+      color: #475569;
+      border: 1px solid #d1d5db;
+      padding: 10px 16px;
+      border-radius: 6px;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-family: inherit;
+      font-weight: 500;
+    }
+    
+    .sample-btn:hover {
+      background: #e2e8f0;
+      border-color: #9ca3af;
+      transform: translateY(-1px);
+    }
+    
+    .extension-controls {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    
+    .control-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    
+    .control-group label {
+      font-weight: 500;
+      color: #374151;
+      font-size: 14px;
+    }
+    
+    .control-group select {
+      padding: 10px 12px;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      font-size: 14px;
+      font-family: inherit;
+      background: #ffffff;
+    }
+    
+    .control-group select:focus {
+      outline: none;
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+    
+    .action-buttons {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+      margin-bottom: 32px;
+    }
+    
+    .action-btn {
+      background: #0f172a;
+      color: #ffffff;
+      border: none;
+      padding: 14px 24px;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-family: inherit;
+      flex: 1;
+      min-width: 150px;
+    }
+    
+    .action-btn:hover {
+      background: #1e293b;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15);
+    }
+    
+    .action-btn.rewrite { background: #3b82f6; }
+    .action-btn.rewrite:hover { background: #2563eb; }
+    
+    .action-btn.reword { background: #10b981; }
+    .action-btn.reword:hover { background: #059669; }
+    
+    .action-btn.improve { background: #f59e0b; }
+    .action-btn.improve:hover { background: #d97706; }
+    
+    .action-btn.summarize { background: #8b5cf6; }
+    .action-btn.summarize:hover { background: #7c3aed; }
+    
+    .results-section {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 24px;
+    }
+    
+    .results-section h3 {
+      font-size: 18px;
+      font-weight: 600;
+      color: #111827;
+      margin-bottom: 16px;
+    }
+    
+    .result-item {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+    
+    .result-item:last-child {
+      margin-bottom: 0;
+    }
+    
+    .result-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid #f1f5f9;
+    }
+    
+    .result-function {
+      font-weight: 600;
+      color: #111827;
+      font-size: 16px;
+    }
+    
+    .result-meta {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    
+    .meta-badge {
+      background: #f1f5f9;
+      color: #475569;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+    
+    .result-content {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 4px;
+      padding: 12px;
+      font-size: 14px;
+      line-height: 1.5;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    
+    .instructions {
+      background: #fef3c7;
+      border: 1px solid #fbbf24;
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 24px;
+    }
+    
+    .instructions h3 {
+      color: #92400e;
+      margin-bottom: 12px;
+      font-size: 16px;
+    }
+    
+    .instructions ul {
+      color: #92400e;
+      padding-left: 20px;
+    }
+    
+    .instructions li {
+      margin-bottom: 6px;
+    }
+    
+    .status {
+      text-align: center;
+      padding: 12px;
+      border-radius: 6px;
+      margin-bottom: 16px;
+      font-weight: 500;
+      display: none;
+    }
+    
+    .status.success {
+      background: #f0fdf4;
+      color: #166534;
+      border: 1px solid #bbf7d0;
+    }
+    
+    .status.error {
+      background: #fef2f2;
+      color: #991b1b;
+      border: 1px solid #fecaca;
+    }
+    
+    @media (max-width: 768px) {
+      .content {
+        padding: 20px;
+      }
+      
+      .extension-controls {
+        grid-template-columns: 1fr;
+      }
+      
+      .action-buttons {
+        flex-direction: column;
+      }
+      
+      .action-btn {
+        min-width: auto;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+              <h1>PerplexEditor - Extension Test</h1>
+      <p>Test the Firefox extension with random messages and different settings</p>
+    </div>
+    
+    <div class="content">
+      <div class="instructions">
+        <h3>📋 How to Test the Extension</h3>
+        <ul>
+          <li><strong>Install the extension</strong> first if you haven't already</li>
+          <li><strong>Configure your API key</strong> in the extension options</li>
+          <li><strong>Select some text</strong> in the text area below</li>
+          <li><strong>Use the extension</strong> via context menu, toolbar button, or keyboard shortcuts</li>
+          <li><strong>Check results</strong> in the results section below</li>
+        </ul>
+      </div>
+      
+      <div class="test-section">
+        <h2>Test Text</h2>
+        <textarea 
+          class="text-input" 
+          id="testText" 
+          placeholder="Enter your test text here, or use the sample buttons below..."
+        ></textarea>
+        
+        <div class="sample-texts">
+          <button class="sample-btn" data-text="Hi team, I wanted to let you know that the project deadline has been moved to next Friday. We need to finish the final review by Wednesday. Thanks for your hard work on this.">📧 Business Email</button>
+          <button class="sample-btn" data-text="The API endpoint processes user authentication requests and returns JWT tokens for subsequent API calls. It validates credentials against the database and implements rate limiting.">🔧 Technical Description</button>
+          <button class="sample-btn" data-text="Hey! Just checking in to see how the weekend went. Did you get a chance to try that new restaurant we talked about? I heard the food is amazing there.">💬 Casual Message</button>
+          <button class="sample-btn" data-text="The quarterly financial report indicates a 15% increase in revenue compared to the previous quarter. This growth is primarily attributed to the successful launch of our new product line and expansion into international markets.">📊 Financial Report</button>
+          <button class="sample-btn" data-text="I'm really excited about the upcoming conference next month. It's going to be a great opportunity to network with industry leaders and learn about the latest trends in our field.">🎯 Conference Planning</button>
+        </div>
+      </div>
+      
+      <div class="test-section">
+        <h2>Extension Settings (Optional)</h2>
+        <p style="color: #6b7280; margin-bottom: 16px; font-size: 14px;">
+          These settings will be applied when you use the extension. You can also change them in the extension options.
+        </p>
+        
+        <div class="extension-controls">
+          <div class="control-group">
+            <label for="toneSelect">Default Tone</label>
+            <select id="toneSelect">
+              <option value="neutral">Neutral</option>
+              <option value="formal">Formal</option>
+              <option value="casual">Casual</option>
+              <option value="friendly">Friendly</option>
+              <option value="professional">Professional</option>
+              <option value="technical">Technical</option>
+              <option value="creative">Creative</option>
+              <option value="concise">Concise</option>
+            </select>
+          </div>
+          
+          <div class="control-group">
+            <label for="lengthSelect">Default Length</label>
+            <select id="lengthSelect">
+              <option value="same">Same Length</option>
+              <option value="shorter">Shorter</option>
+              <option value="longer">Longer</option>
+              <option value="concise">Concise</option>
+              <option value="detailed">Detailed</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      
+      <div class="test-section">
+        <h2>Test Actions</h2>
+        <p style="color: #6b7280; margin-bottom: 16px; font-size: 14px;">
+          Select some text above, then use these buttons to test the extension functions:
+        </p>
+        
+        <div class="action-buttons">
+          <button class="action-btn rewrite" id="testRewrite">🔄 Rewrite Text</button>
+          <button class="action-btn reword" id="testReword">📝 Reword Text</button>
+          <button class="action-btn improve" id="testImprove">✨ Improve Text</button>
+          <button class="action-btn summarize" id="testSummarize">📋 Summarize Text</button>
+        </div>
+        
+        <div class="status" id="status"></div>
+      </div>
+      
+      <div class="results-section">
+        <h3>Test Results</h3>
+        <p style="color: #6b7280; margin-bottom: 16px; font-size: 14px;">
+          Results from extension usage will appear here. Use the extension on the text above to see results.
+        </p>
+        
+        <div id="resultsContainer">
+          <!-- Results will be populated here -->
+        </div>
+      </div>
+      
+      <div class="test-section">
+        <h2>Extension Usage Methods</h2>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
+          <div style="background: #f8fafc; padding: 20px; border-radius: 8px; border: 1px solid #e2e8f0;">
+            <h4 style="margin-bottom: 12px; color: #111827;">🖱️ Context Menu</h4>
+            <p style="color: #6b7280; font-size: 14px;">Right-click on selected text and choose from the context menu options.</p>
+          </div>
+          
+          <div style="background: #f8fafc; padding: 20px; border-radius: 8px; border: 1px solid #e2e8f0;">
+            <h4 style="margin-bottom: 12px; color: #111827;">🔘 Toolbar Button</h4>
+            <p style="color: #6b7280; font-size: 14px;">Click the extension icon in the toolbar to open the action menu.</p>
+          </div>
+          
+          <div style="background: #f8fafc; padding: 20px; border-radius: 8px; border: 1px solid #e2e8f0;">
+            <h4 style="margin-bottom: 12px; color: #111827;">⌨️ Keyboard Shortcuts</h4>
+            <p style="color: #6b7280; font-size: 14px;">
+              Alt+Shift+R: Rewrite<br>
+              Alt+Shift+W: Reword<br>
+              Alt+Shift+I: Improve<br>
+              Alt+Shift+S: Summarize
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <script>
+    // Sample text buttons
+    document.querySelectorAll('.sample-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const text = btn.getAttribute('data-text');
+        document.getElementById('testText').value = text;
+      });
+    });
+    
+    // Test action buttons (these simulate what the extension would do)
+    document.querySelectorAll('.action-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const selectedText = window.getSelection().toString().trim();
+        const textArea = document.getElementById('testText');
+        
+        if (!selectedText && textArea.value.trim()) {
+          // If no text is selected, select all text in the textarea
+          textArea.select();
+          const newSelection = window.getSelection().toString().trim();
+          if (newSelection) {
+            showStatus('Text selected! Now use the extension (context menu, toolbar button, or keyboard shortcuts) to process it.', 'success');
+          } else {
+            showStatus('Please enter some text first.', 'error');
+          }
+        } else if (selectedText) {
+          showStatus('Text selected! Now use the extension (context menu, toolbar button, or keyboard shortcuts) to process it.', 'success');
+        } else {
+          showStatus('Please select some text first.', 'error');
+        }
+      });
+    });
+    
+    // Function to show status messages
+    function showStatus(message, type) {
+      const statusEl = document.getElementById('status');
+      statusEl.textContent = message;
+      statusEl.className = `status ${type}`;
+      statusEl.style.display = 'block';
+      
+      setTimeout(() => {
+        statusEl.style.display = 'none';
+      }, 5000);
+    }
+    
+    // Function to add test results (this would be called by the extension)
+    function addTestResult(functionName, tone, length, originalText, resultText) {
+      const resultsContainer = document.getElementById('resultsContainer');
+      
+      const resultItem = document.createElement('div');
+      resultItem.className = 'result-item';
+      
+      const timestamp = new Date().toLocaleTimeString();
+      
+      resultItem.innerHTML = `
+        <div class="result-header">
+          <div class="result-function">${functionName.charAt(0).toUpperCase() + functionName.slice(1)}</div>
+          <div class="result-meta">
+            <span class="meta-badge">${tone}</span>
+            <span class="meta-badge">${length}</span>
+            <span class="meta-badge">${timestamp}</span>
+          </div>
+        </div>
+        <div class="result-content">${resultText}</div>
+      `;
+      
+      resultsContainer.insertBefore(resultItem, resultsContainer.firstChild);
+    }
+    
+    // Make the function globally available for the extension to call
+    window.addTestResult = addTestResult;
+    
+    // Auto-populate with a sample text
+    document.addEventListener('DOMContentLoaded', function() {
+      document.getElementById('testText').value = "Hi team, I wanted to let you know that the project deadline has been moved to next Friday. We need to finish the final review by Wednesday. Thanks for your hard work on this.";
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,875 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>PerplexEditor - Comprehensive Test</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: #f8fafc;
+      color: #0f172a;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+    
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+    
+    .header {
+      text-align: center;
+      margin-bottom: 32px;
+      padding: 32px;
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+    }
+    
+    .header h1 {
+      font-size: 32px;
+      font-weight: 700;
+      color: #0f172a;
+      margin-bottom: 8px;
+      letter-spacing: -0.025em;
+    }
+    
+    .header p {
+      color: #64748b;
+      font-size: 16px;
+      margin-bottom: 24px;
+    }
+    
+    .test-controls {
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    
+    .text-input-section {
+      width: 100%;
+      margin-bottom: 16px;
+    }
+    
+    .sample-texts {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+    
+    .sample-btn {
+      background: #f1f5f9;
+      color: #475569;
+      border: 1px solid #d1d5db;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-family: inherit;
+      font-weight: 500;
+    }
+    
+    .sample-btn:hover {
+      background: #e2e8f0;
+      border-color: #9ca3af;
+      transform: translateY(-1px);
+    }
+    
+    .test-btn {
+      background: #0f172a;
+      color: #ffffff;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-family: inherit;
+    }
+    
+    .test-btn:hover {
+      background: #1e293b;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15);
+    }
+    
+    .test-btn:disabled {
+      background: #9ca3af;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+    
+    .progress-bar {
+      width: 100%;
+      height: 8px;
+      background: #e2e8f0;
+      border-radius: 4px;
+      margin: 16px 0;
+      overflow: hidden;
+    }
+    
+    .progress-fill {
+      height: 100%;
+      background: #3b82f6;
+      width: 0%;
+      transition: width 0.3s ease;
+    }
+    
+    .status {
+      text-align: center;
+      margin: 16px 0;
+      font-weight: 500;
+      color: #64748b;
+    }
+    
+    .test-results {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+      gap: 24px;
+      margin-top: 32px;
+    }
+    
+    .test-card {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 24px;
+      box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+      transition: all 0.2s ease;
+    }
+    
+    .test-card:hover {
+      border-color: #cbd5e1;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+    
+    .test-card h3 {
+      font-size: 18px;
+      font-weight: 600;
+      color: #111827;
+      margin-bottom: 16px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid #e5e7eb;
+    }
+    
+    .test-info {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+    
+    .test-badge {
+      background: #f1f5f9;
+      color: #475569;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+    
+    .test-badge.primary {
+      background: #dbeafe;
+      color: #1e40af;
+    }
+    
+    .test-badge.secondary {
+      background: #fef3c7;
+      color: #92400e;
+    }
+    
+    .test-badge.tertiary {
+      background: #dcfce7;
+      color: #166534;
+    }
+    
+    .text-section {
+      margin-bottom: 16px;
+    }
+    
+    .text-section h4 {
+      font-size: 14px;
+      font-weight: 600;
+      color: #374151;
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    
+    .text-content {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      padding: 12px;
+      font-size: 14px;
+      line-height: 1.5;
+      color: #374151;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    
+    .text-content.error {
+      background: #fef2f2;
+      border-color: #fecaca;
+      color: #991b1b;
+    }
+    
+    .text-content.loading {
+      background: #f0f9ff;
+      border-color: #bae6fd;
+      color: #0369a1;
+      font-style: italic;
+    }
+    
+    .test-summary {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 20px;
+      margin-top: 32px;
+    }
+    
+    .test-summary h2 {
+      font-size: 20px;
+      font-weight: 600;
+      color: #111827;
+      margin-bottom: 16px;
+    }
+    
+    .summary-stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+    }
+    
+    .stat-item {
+      text-align: center;
+      padding: 16px;
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+    }
+    
+    .stat-number {
+      font-size: 24px;
+      font-weight: 700;
+      color: #0f172a;
+      margin-bottom: 4px;
+    }
+    
+    .stat-label {
+      font-size: 14px;
+      color: #64748b;
+      font-weight: 500;
+    }
+    
+    .loading-spinner {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 2px solid #e2e8f0;
+      border-radius: 50%;
+      border-top-color: #3b82f6;
+      animation: spin 1s ease-in-out infinite;
+      margin-right: 8px;
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    
+    @media (max-width: 768px) {
+      .container {
+        padding: 16px;
+      }
+      
+      .test-controls {
+        flex-direction: column;
+        align-items: center;
+      }
+      
+      .test-results {
+        grid-template-columns: 1fr;
+      }
+      
+      .test-card {
+        padding: 16px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+              <h1>PerplexEditor - Comprehensive Test</h1>
+      <p>Test all features including tones, lengths, AI functions, and per-site context</p>
+      
+      <div class="test-controls">
+        <div class="api-key-input">
+          <input type="text" id="apiKeyInput" placeholder="Enter your Perplexity API key" style="margin-right: 16px; padding: 8px 12px; border: 1px solid #d1d5db; border-radius: 6px; width: 300px;">
+          <button class="test-btn" id="saveApiKey" style="background: #10b981; margin-right: 16px;">💾 Save Key</button>
+        </div>
+        <div style="margin-top: 16px;">
+          <div class="text-input-section">
+            <textarea id="customTextInput" placeholder="Enter your text to test (or use sample texts below)" style="width: 100%; margin-bottom: 16px; padding: 12px; border: 1px solid #d1d5db; border-radius: 6px; min-height: 80px; font-family: inherit;"></textarea>
+            <div class="sample-texts">
+              <button class="sample-btn" data-text="Hi team, I wanted to let you know that the project deadline has been moved to next Friday. We need to finish the final review by Wednesday. Thanks for your hard work on this.">📧 Business Email</button>
+              <button class="sample-btn" data-text="The API endpoint processes user authentication requests and returns JWT tokens for subsequent API calls. It validates credentials against the database and implements rate limiting.">🔧 Technical Description</button>
+              <button class="sample-btn" data-text="Hey! Just checking in to see how the weekend went. Did you get a chance to try that new restaurant we talked about? I heard the food is amazing there.">💬 Casual Message</button>
+            </div>
+          </div>
+          <div style="margin-top: 16px;">
+            <button class="test-btn" id="runRandomTests">🎲 Run 10 Random Tests</button>
+            <button class="test-btn" id="runBasicTests">📝 Basic Tests</button>
+            <button class="test-btn" id="runContextTests">🌐 Context Tests</button>
+            <button class="test-btn" id="clearResults">🗑️ Clear Results</button>
+          </div>
+        </div>
+      </div>
+      
+      <div class="progress-bar">
+        <div class="progress-fill" id="progressFill"></div>
+      </div>
+      
+      <div class="status" id="status">Ready to test</div>
+    </div>
+    
+    <div class="test-results" id="testResults">
+      <!-- Test results will be populated here -->
+    </div>
+    
+    <div class="test-summary" id="testSummary" style="display: none;">
+      <h2>Test Summary</h2>
+      <div class="summary-stats" id="summaryStats">
+        <!-- Summary stats will be populated here -->
+      </div>
+    </div>
+  </div>
+  
+  <script>
+    // Test configuration
+    const testConfig = {
+      tones: ['neutral', 'formal', 'casual', 'friendly', 'professional', 'technical', 'creative', 'concise'],
+      lengths: ['same', 'shorter', 'longer', 'concise', 'detailed'],
+      functions: ['rewrite', 'reword', 'improve', 'summarize'],
+      testTexts: [
+        {
+          name: 'Business Email',
+          text: 'Hi team, I wanted to let you know that the project deadline has been moved to next Friday. We need to finish the final review by Wednesday. Thanks for your hard work on this.'
+        },
+        {
+          name: 'Technical Description',
+          text: 'The API endpoint processes user authentication requests and returns JWT tokens for subsequent API calls. It validates credentials against the database and implements rate limiting.'
+        },
+        {
+          name: 'Casual Message',
+          text: 'Hey! Just checking in to see how the weekend went. Did you get a chance to try that new restaurant we talked about? I heard the food is amazing there.'
+        }
+      ]
+    };
+    
+    let testResults = [];
+    let currentTestIndex = 0;
+    let totalTests = 0;
+    
+    // Initialize the page
+    document.addEventListener('DOMContentLoaded', function() {
+      setupEventListeners();
+      calculateTotalTests();
+    });
+    
+    function setupEventListeners() {
+      document.getElementById('runRandomTests').addEventListener('click', () => runRandomTests());
+      document.getElementById('runBasicTests').addEventListener('click', () => runBasicTests());
+      document.getElementById('runContextTests').addEventListener('click', () => runContextTests());
+      document.getElementById('clearResults').addEventListener('click', clearResults);
+      document.getElementById('saveApiKey').addEventListener('click', saveApiKey);
+      
+      // Load saved API key if exists
+      const savedKey = localStorage.getItem('perplexity_api_key');
+      if (savedKey) {
+        document.getElementById('apiKeyInput').value = savedKey;
+      }
+      
+      // Setup sample text buttons
+      document.querySelectorAll('.sample-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const text = btn.getAttribute('data-text');
+          document.getElementById('customTextInput').value = text;
+        });
+      });
+    }
+    
+    function saveApiKey() {
+      const apiKey = document.getElementById('apiKeyInput').value.trim();
+      if (apiKey) {
+        localStorage.setItem('perplexity_api_key', apiKey);
+        updateStatus('API key saved!', 'success');
+        setTimeout(() => updateStatus('Ready to test', ''), 2000);
+      } else {
+        updateStatus('Please enter a valid API key', 'error');
+      }
+    }
+    
+    function calculateTotalTests() {
+      // Random tests: 10 tests
+      // Basic tests: 3 texts × 4 functions × 5 tones × 5 lengths = 300 tests
+      // Context tests: 3 texts × 4 functions × 1 tone × 1 length = 12 tests
+      totalTests = 10; // Default for random tests
+    }
+    
+    async function runRandomTests() {
+      clearResults();
+      
+      const customText = document.getElementById('customTextInput').value.trim();
+      if (!customText) {
+        updateStatus('Please enter some text to test or select a sample text', 'error');
+        return;
+      }
+      
+      updateStatus('Running 10 random tests...', 'loading');
+      disableButtons(true);
+      
+      // Reset progress
+      currentTestIndex = 0;
+      totalTests = 10;
+      document.getElementById('progressFill').style.width = '0%';
+      
+      // Generate 10 random test combinations
+      const randomTests = generateRandomTests(customText);
+      
+      for (const test of randomTests) {
+        await runSingleTest(test.textItem, test.functionName, test.tone, test.length, test.useContext);
+        updateProgress();
+      }
+      
+      updateStatus('Random tests completed!', 'success');
+      disableButtons(false);
+      showSummary();
+    }
+    
+    function generateRandomTests(customText) {
+      const tests = [];
+      const textItem = { name: 'Custom Text', text: customText };
+      
+      for (let i = 0; i < 10; i++) {
+        const functionName = testConfig.functions[Math.floor(Math.random() * testConfig.functions.length)];
+        const tone = testConfig.tones[Math.floor(Math.random() * testConfig.tones.length)];
+        const length = testConfig.lengths[Math.floor(Math.random() * testConfig.lengths.length)];
+        const useContext = Math.random() < 0.3; // 30% chance of using context
+        
+        tests.push({ textItem, functionName, tone, length, useContext });
+      }
+      
+      return tests;
+    }
+    
+    async function runAllTests() {
+      clearResults();
+      await runBasicTests();
+      await runContextTests();
+      showSummary();
+    }
+    
+    async function runBasicTests() {
+      clearResults();
+      
+      const customText = document.getElementById('customTextInput').value.trim();
+      if (!customText) {
+        updateStatus('Please enter some text to test or select a sample text', 'error');
+        return;
+      }
+      
+      updateStatus('Running basic tests...', 'loading');
+      disableButtons(true);
+      
+      // Reset progress
+      currentTestIndex = 0;
+      totalTests = testConfig.functions.length * testConfig.tones.length * testConfig.lengths.length;
+      document.getElementById('progressFill').style.width = '0%';
+      
+      const textItem = { name: 'Custom Text', text: customText };
+      
+      for (const functionName of testConfig.functions) {
+        for (const tone of testConfig.tones) {
+          for (const length of testConfig.lengths) {
+            await runSingleTest(textItem, functionName, tone, length, false);
+            updateProgress();
+          }
+        }
+      }
+      
+      updateStatus('Basic tests completed!', 'success');
+      disableButtons(false);
+      showSummary();
+    }
+    
+    async function runContextTests() {
+      clearResults();
+      
+      const customText = document.getElementById('customTextInput').value.trim();
+      if (!customText) {
+        updateStatus('Please enter some text to test or select a sample text', 'error');
+        return;
+      }
+      
+      updateStatus('Running context tests...', 'loading');
+      disableButtons(true);
+      
+      // Reset progress
+      currentTestIndex = 0;
+      totalTests = testConfig.functions.length;
+      document.getElementById('progressFill').style.width = '0%';
+      
+      const textItem = { name: 'Custom Text', text: customText };
+      
+      // Test with Outlook context (formal, same length)
+      for (const functionName of testConfig.functions) {
+        await runSingleTest(textItem, functionName, 'formal', 'same', true);
+        updateProgress();
+      }
+      
+      updateStatus('Context tests completed!', 'success');
+      disableButtons(false);
+      showSummary();
+    }
+    
+    async function runSingleTest(textItem, functionName, tone, length, useContext) {
+      const testId = `${textItem.name}-${functionName}-${tone}-${length}-${useContext ? 'context' : 'basic'}`;
+      
+      // Create test card
+      const card = createTestCard(testId, textItem, functionName, tone, length, useContext);
+      document.getElementById('testResults').appendChild(card);
+      
+      // Update status
+      updateStatus(`Testing: ${functionName} with ${tone} tone, ${length} length${useContext ? ' (with context)' : ''}`, 'running');
+      
+      try {
+        // Simulate API call (replace with actual Perplexity API call)
+        const result = await simulateAPICall(textItem.text, functionName, tone, length, useContext);
+        
+        // Update card with results
+        updateTestCard(card, result, null);
+        
+        // Store result
+        testResults.push({
+          id: testId,
+          text: textItem.name,
+          function: functionName,
+          tone: tone,
+          length: length,
+          useContext: useContext,
+          success: true,
+          result: result
+        });
+        
+      } catch (error) {
+        // Update card with error
+        updateTestCard(card, null, error.message);
+        
+        // Store error result
+        testResults.push({
+          id: testId,
+          text: textItem.name,
+          function: functionName,
+          tone: tone,
+          length: length,
+          useContext: useContext,
+          success: false,
+          error: error.message
+        });
+      }
+    }
+    
+    function createTestCard(testId, textItem, functionName, tone, length, useContext) {
+      const card = document.createElement('div');
+      card.className = 'test-card';
+      
+      card.innerHTML = `
+        <h3>${functionName.charAt(0).toUpperCase() + functionName.slice(1)} Test</h3>
+        <div class="test-info">
+          <span class="test-badge primary">${textItem.name}</span>
+          <span class="test-badge secondary">${tone}</span>
+          <span class="test-badge tertiary">${length}</span>
+          ${useContext ? '<span class="test-badge" style="background: #f3e8ff; color: #7c3aed;">Context</span>' : ''}
+        </div>
+        
+        <div class="text-section">
+          <h4>Original Text</h4>
+          <div class="text-content">${textItem.text}</div>
+        </div>
+        
+        <div class="text-section">
+          <h4>AI Response</h4>
+          <div class="text-content loading">
+            <span class="loading-spinner"></span>Processing...
+          </div>
+        </div>
+      `;
+      
+      return card;
+    }
+    
+    function updateTestCard(card, result, error) {
+      if (error) {
+        // Show error
+        const responseEl = card.querySelector('.text-content.loading');
+        if (responseEl) {
+          responseEl.className = 'text-content error';
+          responseEl.textContent = `Error: ${error}`;
+        }
+      } else {
+        // Show result
+        const responseEl = card.querySelector('.text-content.loading');
+        if (responseEl) {
+          responseEl.className = 'text-content';
+          responseEl.textContent = result;
+        }
+      }
+    }
+    
+    async function simulateAPICall(text, functionName, tone, length, useContext) {
+      try {
+        // Get the extension's configuration
+        const config = await getExtensionConfig();
+        
+        if (!config.apiKey) {
+          throw new Error('API Key not configured. Please set your Perplexity API key in the extension options.');
+        }
+        
+        // Build the prompt based on function, tone, and length
+        let prompt = buildPrompt(functionName, tone, length, useContext, config);
+        const fullPrompt = `${prompt}\n\nText: "${text}"`;
+        
+        console.log(`Testing ${functionName} with ${tone} tone, ${length} length${useContext ? ' (with context)' : ''}`);
+        console.log('Full prompt:', fullPrompt);
+        
+        // Make actual API call to Perplexity
+        const response = await fetch('https://api.perplexity.ai/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${config.apiKey}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            model: 'sonar',
+            messages: [
+              {
+                role: 'user',
+                content: fullPrompt
+              }
+            ],
+            max_tokens: 1000,
+            temperature: 0.7
+          })
+        });
+        
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(`API Error ${response.status}: ${errorData.error?.message || response.statusText}`);
+        }
+        
+        const data = await response.json();
+        const aiResponse = data.choices[0]?.message?.content?.trim();
+        
+        if (!aiResponse) {
+          throw new Error('No response from AI');
+        }
+        
+        console.log('AI Response:', aiResponse);
+        return aiResponse;
+        
+      } catch (error) {
+        console.error('API call failed:', error);
+        throw error;
+      }
+    }
+    
+    async function getExtensionConfig() {
+      try {
+        // Try to get config from extension storage
+        if (typeof browser !== 'undefined' && browser.storage) {
+          const config = await browser.storage.sync.get({
+            apiKey: '',
+            defaultTone: 'neutral',
+            defaultLength: 'same',
+            siteContexts: [],
+            rewritePrompt: 'You are an expert text editor and communication specialist. Your task is to rewrite the provided text to make it clearer, more engaging, and more effective while preserving the original meaning and intent.\n\nGuidelines:\n- Maintain the core message and purpose\n- Improve clarity, flow, and readability\n- Use active voice and strong verbs where appropriate\n- Eliminate redundancy and wordiness\n- Ensure logical structure and coherence\n- Keep the same level of formality unless tone is specified\n- Preserve any existing dashes, hyphens, or symbols that are part of the original text\n\nCRITICAL: Return ONLY the rewritten text. Do not add quotes, explanations, or any other text. Just return the rewritten version:\n\nText to rewrite:',
+            rewordPrompt: 'You are a skilled linguist and communication expert. Your task is to rephrase the provided text using different vocabulary and sentence structures while maintaining the exact same meaning, tone, and intent.\n\nGuidelines:\n- Use synonyms and alternative phrasing\n- Vary sentence structure and length\n- Maintain the same level of formality\n- Keep the same emotional tone and emphasis\n- Preserve all specific details and facts\n- Ensure the new version conveys identical meaning\n- Preserve any existing dashes, hyphens, or symbols that are part of the original text\n\nCRITICAL: Return ONLY the reworded text. Do not add quotes, explanations, or any other text. Just return the alternative version:\n\nText to reword:',
+            improvePrompt: 'You are a professional editor and writing consultant. Your task is to improve the provided text by enhancing its clarity, grammar, structure, and overall effectiveness while maintaining the original message and style.\n\nGuidelines:\n- Fix grammar, punctuation, and spelling errors\n- Improve sentence structure and flow\n- Enhance clarity and readability\n- Maintain the original tone and style\n- Ensure logical organization and coherence\n- Use more precise and effective language\n- Preserve any existing dashes, hyphens, or symbols that are part of the original text\n\nCRITICAL: Return ONLY the improved text. Do not add quotes, explanations, or any other text. Just return the enhanced version:\n\nText to improve:',
+            summarizePrompt: 'You are an expert at creating clear, concise summaries. Your task is to provide a comprehensive yet concise summary of the provided text that captures the key points, main ideas, and essential information.\n\nGuidelines:\n- Identify and extract the main points and key ideas\n- Maintain the original meaning and intent\n- Use clear, direct language\n- Organize information logically\n- Include relevant details and examples\n- Ensure the summary is self-contained and understandable\n- Preserve any existing dashes, hyphens, or symbols that are part of the original text\n\nCRITICAL: Return ONLY the summary. Do not add quotes, explanations, or any other text. Just return the summary:\n\nText to summarize:'
+          });
+          
+          // Prioritize localStorage API key if available
+          const localApiKey = localStorage.getItem('perplexity_api_key');
+          if (localApiKey) {
+            config.apiKey = localApiKey;
+          }
+          
+          return config;
+        }
+        
+        // Fallback: return default config for testing
+        return {
+          apiKey: localStorage.getItem('perplexity_api_key') || '',
+          defaultTone: 'neutral',
+          defaultLength: 'same',
+          siteContexts: [
+            {
+              domain: 'outlook.office.com',
+              audience: 'Business colleagues, formal tone, professional communication'
+            }
+          ],
+          rewritePrompt: 'Rewrite the following text to make it clearer and more engaging. IMPORTANT: Return ONLY the rewritten text. Preserve any existing dashes, hyphens, or symbols that are part of the original text, but do not add new quotes, dashes, explanations, or any other text. Just return the rewritten text:',
+          rewordPrompt: 'Reword the following text using different vocabulary while maintaining the same meaning. IMPORTANT: Return ONLY the reworded text. Preserve any existing dashes, hyphens, or symbols that are part of the original text, but do not add new quotes, dashes, explanations, or any other text. Just return the reworded text:',
+          improvePrompt: 'Improve the following text by enhancing clarity, grammar, and flow. IMPORTANT: Return ONLY the improved text. Preserve any existing dashes, hyphens, or symbols that are part of the original text, but do not add new quotes, dashes, explanations, or any other text. Just return the improved text:',
+          summarizePrompt: 'Provide a concise summary of the following text. IMPORTANT: Return ONLY the summary. Preserve any existing dashes, hyphens, or symbols that are part of the original text, but do not add new quotes, dashes, explanations, or any other text. Just return the summary:'
+        };
+      } catch (error) {
+        console.error('Failed to get extension config:', error);
+        return {
+          apiKey: '',
+          defaultTone: 'neutral',
+          defaultLength: 'same',
+          siteContexts: [],
+          rewritePrompt: 'Rewrite the following text to make it clearer and more engaging. IMPORTANT: Return ONLY the rewritten text. Preserve any existing dashes, hyphens, or symbols that are part of the original text, but do not add new quotes, dashes, explanations, or any other text. Just return the rewritten text:',
+          rewordPrompt: 'Reword the following text using different vocabulary while maintaining the same meaning. IMPORTANT: Return ONLY the reworded text. Preserve any existing dashes, hyphens, or symbols that are part of the original text, but do not add new quotes, dashes, explanations, or any other text. Just return the reworded text:',
+          improvePrompt: 'Improve the following text by enhancing clarity, grammar, and flow. IMPORTANT: Return ONLY the improved text. Preserve any existing dashes, hyphens, or symbols that are part of the original text, but do not add new quotes, dashes, explanations, or any other text. Just return the improved text:',
+          summarizePrompt: 'Provide a concise summary of the following text. IMPORTANT: Return ONLY the summary. Preserve any existing dashes, hyphens, or symbols that are part of the original text, but do not add new quotes, dashes, explanations, or any other text. Just return the summary:'
+        };
+      }
+    }
+    
+    function buildPrompt(functionName, tone, length, useContext, config) {
+      let prompt = '';
+      
+      // Get base prompt from config
+      switch (functionName) {
+        case 'rewrite':
+          prompt = config.rewritePrompt;
+          break;
+        case 'reword':
+          prompt = config.rewordPrompt;
+          break;
+        case 'improve':
+          prompt = config.improvePrompt;
+          break;
+        case 'summarize':
+          prompt = config.summarizePrompt;
+          break;
+        default:
+          prompt = config.rewritePrompt;
+      }
+      
+      // Add tone instruction
+      if (tone !== 'neutral') {
+        const toneInstructions = {
+          'formal': ' Use a formal, professional tone.',
+          'casual': ' Use a casual, relaxed tone.',
+          'friendly': ' Use a warm, friendly tone.',
+          'professional': ' Use a business-appropriate, professional tone.',
+          'technical': ' Use technical, precise language.',
+          'creative': ' Use creative, engaging language.',
+          'concise': ' Be concise and to the point.'
+        };
+        prompt += toneInstructions[tone] || '';
+      }
+      
+      // Add length instruction
+      if (length !== 'same') {
+        const lengthInstructions = {
+          'shorter': ' Make the text shorter while preserving key information.',
+          'longer': ' Expand the text with more detail and context.',
+          'concise': ' Make the text very concise and direct.',
+          'detailed': ' Provide a detailed, comprehensive version.'
+        };
+        prompt += lengthInstructions[length] || '';
+      }
+      
+      // Add site context if applicable
+      if (useContext && config.siteContexts && config.siteContexts.length > 0) {
+        const outlookContext = config.siteContexts.find(context => 
+          context.domain.includes('outlook.office.com')
+        );
+        if (outlookContext) {
+          prompt += ` Context: This text is for ${outlookContext.audience}.`;
+        }
+      }
+      
+      return prompt;
+    }
+    
+    function updateProgress() {
+      currentTestIndex++;
+      const percentage = (currentTestIndex / totalTests) * 100;
+      document.getElementById('progressFill').style.width = `${percentage}%`;
+    }
+    
+    function updateStatus(message, type) {
+      const statusEl = document.getElementById('status');
+      statusEl.textContent = message;
+      statusEl.className = `status ${type}`;
+    }
+    
+    function disableButtons(disabled) {
+      const buttons = document.querySelectorAll('.test-btn');
+      buttons.forEach(btn => btn.disabled = disabled);
+    }
+    
+    function clearResults() {
+      document.getElementById('testResults').innerHTML = '';
+      document.getElementById('testSummary').style.display = 'none';
+      document.getElementById('progressFill').style.width = '0%';
+      document.getElementById('status').textContent = 'Ready to test';
+      currentTestIndex = 0;
+      testResults = [];
+    }
+    
+    function showSummary() {
+      const summary = document.getElementById('testSummary');
+      const stats = document.getElementById('summaryStats');
+      
+      const totalTests = testResults.length;
+      const successfulTests = testResults.filter(r => r.success).length;
+      const failedTests = totalTests - successfulTests;
+      const contextTests = testResults.filter(r => r.useContext).length;
+      
+      stats.innerHTML = `
+        <div class="stat-item">
+          <div class="stat-number">${totalTests}</div>
+          <div class="stat-label">Total Tests</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-number">${successfulTests}</div>
+          <div class="stat-label">Successful</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-number">${failedTests}</div>
+          <div class="stat-label">Failed</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-number">${contextTests}</div>
+          <div class="stat-label">Context Tests</div>
+        </div>
+      `;
+      
+      summary.style.display = 'block';
+    }
+  </script>
+</body>
+</html>

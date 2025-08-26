@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>PerplexEditor - Settings</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: #ffffff;
+      color: #0f172a;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+    
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+    
+    .header {
+      text-align: center;
+      margin-bottom: 48px;
+      padding: 32px 0;
+      border-bottom: 1px solid #e2e8f0;
+    }
+    
+    .header h1 {
+      font-size: 32px;
+      font-weight: 700;
+      color: #0f172a;
+      margin-bottom: 8px;
+      letter-spacing: -0.025em;
+    }
+    
+    .header p {
+      color: #64748b;
+      font-size: 16px;
+      font-weight: 400;
+    }
+    
+    .tabs {
+      display: flex;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 4px;
+      margin-bottom: 32px;
+      gap: 4px;
+    }
+    
+    .tab {
+      flex: 1;
+      padding: 12px 16px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      border-radius: 6px;
+      font-weight: 500;
+      font-size: 14px;
+      color: #64748b;
+      border: none;
+      background: transparent;
+    }
+    
+    .tab.active {
+      background: #ffffff;
+      color: #0f172a;
+      box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+    }
+    
+    .tab:hover:not(.active) {
+      color: #475569;
+    }
+    
+    .tab-content {
+      display: none;
+    }
+    
+    .tab-content.active {
+      display: block;
+    }
+    
+    .form-group {
+      margin-bottom: 24px;
+    }
+    
+    .form-group label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 500;
+      color: #374151;
+      font-size: 14px;
+    }
+    
+    input[type="text"], textarea, select {
+      width: 100%;
+      padding: 12px 16px;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      font-size: 14px;
+      transition: all 0.2s ease;
+      background: #ffffff;
+      color: #374151;
+      font-family: inherit;
+    }
+    
+    input[type="text"]:focus, textarea:focus, select:focus {
+      outline: none;
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+    
+    input[type="text"]:hover, textarea:hover, select:hover {
+      border-color: #9ca3af;
+    }
+    
+    textarea {
+      min-height: 100px;
+      resize: vertical;
+      line-height: 1.5;
+    }
+    
+    select {
+      cursor: pointer;
+      background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+      background-position: right 12px center;
+      background-repeat: no-repeat;
+      background-size: 16px;
+      padding-right: 40px;
+    }
+    
+    .api-key-section {
+      background: #fefce8;
+      border: 1px solid #fbbf24;
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 24px;
+    }
+    
+    .api-key-section label {
+      color: #92400e;
+      font-weight: 600;
+      font-size: 14px;
+    }
+    
+    .api-key-section input {
+      border-color: #fbbf24;
+      background: #ffffff;
+    }
+    
+    .api-key-section input:focus {
+      border-color: #f59e0b;
+    }
+    
+    .help-text {
+      font-size: 13px;
+      color: #6b7280;
+      margin-top: 6px;
+      line-height: 1.4;
+    }
+    
+    .help-text a {
+      color: #3b82f6;
+      text-decoration: none;
+      font-weight: 500;
+    }
+    
+    .help-text a:hover {
+      text-decoration: underline;
+    }
+    
+    .save-btn {
+      background: #0f172a;
+      color: #ffffff;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      width: 100%;
+      margin-top: 8px;
+      font-family: inherit;
+    }
+    
+    .save-btn:hover {
+      background: #1e293b;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15);
+    }
+    
+    .save-btn:active {
+      transform: translateY(0);
+    }
+    
+    .status {
+      margin-top: 16px;
+      padding: 12px 16px;
+      border-radius: 6px;
+      text-align: center;
+      font-weight: 500;
+      display: none;
+      font-size: 14px;
+    }
+    
+    .status.success {
+      background: #f0fdf4;
+      color: #166534;
+      border: 1px solid #bbf7d0;
+    }
+    
+    .status.error {
+      background: #fef2f2;
+      color: #991b1b;
+      border: 1px solid #fecaca;
+    }
+    
+    .add-btn {
+      background: #ffffff;
+      color: #059669;
+      border: 1px solid #10b981;
+      padding: 10px 20px;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      margin-top: 16px;
+      font-family: inherit;
+    }
+    
+    .add-btn:hover {
+      background: #f0fdf4;
+      border-color: #059669;
+      transform: translateY(-1px);
+      box-shadow: 0 2px 8px rgba(16, 185, 129, 0.15);
+    }
+    
+    .site-context-item {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 16px;
+      transition: all 0.2s ease;
+    }
+    
+    .site-context-item:hover {
+      border-color: #cbd5e1;
+      box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+    }
+    
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr auto;
+      gap: 16px;
+      align-items: end;
+    }
+    
+    .remove-btn {
+      background: #ffffff;
+      color: #dc2626;
+      border: 1px solid #fca5a5;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+      font-family: inherit;
+      font-weight: 500;
+    }
+    
+    .remove-btn:hover {
+      background: #fef2f2;
+      border-color: #f87171;
+      transform: translateY(-1px);
+      box-shadow: 0 2px 8px rgba(220, 38, 38, 0.15);
+    }
+    
+    .section-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: #111827;
+      margin: 32px 0 20px 0;
+      padding-bottom: 8px;
+      border-bottom: 1px solid #e5e7eb;
+    }
+    
+    .section-title:first-child {
+      margin-top: 0;
+    }
+    
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+    
+    .card {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+    
+    .card-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: #111827;
+      margin-bottom: 16px;
+    }
+    
+    @media (max-width: 768px) {
+      .container {
+        padding: 16px;
+      }
+      
+      .header {
+        margin-bottom: 32px;
+        padding: 24px 0;
+      }
+      
+      .header h1 {
+        font-size: 28px;
+      }
+      
+      .form-row {
+        grid-template-columns: 1fr;
+        gap: 12px;
+      }
+      
+      .grid-2 {
+        grid-template-columns: 1fr;
+        gap: 16px;
+      }
+      
+      .tabs {
+        flex-direction: column;
+        gap: 2px;
+      }
+      
+      .tab {
+        text-align: left;
+        padding: 12px 16px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+                  <h1>PerplexEditor</h1>
+            <p>Configure your AI-powered text editing experience</p>
+    </div>
+    
+    <div class="tabs">
+      <button class="tab active" data-tab="api">API & Setup</button>
+      <button class="tab" data-tab="prompts">Prompts & Style</button>
+      <button class="tab" data-tab="sites">Site Contexts</button>
+    </div>
+    
+    <!-- API & Setup Tab -->
+    <div class="tab-content active" id="api-tab">
+      <div class="card">
+        <div class="card-title">API Configuration</div>
+        <div class="api-key-section">
+          <div class="form-group">
+            <label for="apiKey">Perplexity API Key *</label>
+            <input type="text" id="apiKey" placeholder="Enter your Perplexity API key">
+            <div class="help-text">
+              Get your API key from <a href="https://www.perplexity.ai/settings/api" target="_blank">Perplexity AI Settings</a>
+            </div>
+          </div>
+        </div>
+        <button class="save-btn" id="saveBtn">Save Settings</button>
+        <div class="status" id="status"></div>
+      </div>
+    </div>
+    
+    <!-- Prompts & Style Tab -->
+    <div class="tab-content" id="prompts-tab">
+      <div class="card">
+        <div class="card-title">Style Preferences</div>
+        <div class="grid-2">
+          <div class="form-group">
+            <label for="defaultTone">Default Tone</label>
+            <select id="defaultTone">
+              <option value="neutral">Neutral</option>
+              <option value="formal">Formal</option>
+              <option value="casual">Casual</option>
+              <option value="friendly">Friendly</option>
+              <option value="professional">Professional</option>
+              <option value="technical">Technical</option>
+              <option value="creative">Creative</option>
+              <option value="concise">Concise</option>
+            </select>
+          </div>
+          
+          <div class="form-group">
+            <label for="defaultLength">Default Length</label>
+            <select id="defaultLength">
+              <option value="same">Same Length</option>
+              <option value="shorter">Shorter</option>
+              <option value="longer">Longer</option>
+              <option value="concise">Concise</option>
+              <option value="detailed">Detailed</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      
+      <div class="card">
+        <div class="card-title">Custom Prompts</div>
+        
+        <div class="form-group">
+          <label for="rewritePrompt">Rewrite Text Prompt</label>
+          <textarea id="rewritePrompt" placeholder="Enter your custom prompt for rewriting text..."></textarea>
+          <div class="help-text">
+            This prompt will be used when rewriting text. Use {text} as a placeholder for the selected text. Tone and length settings will be automatically added.
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <label for="rewordPrompt">Reword Text Prompt</label>
+          <textarea id="rewordPrompt" placeholder="Enter your custom prompt for rewording text..."></textarea>
+          <div class="help-text">
+            This prompt will be used when rewording text. Use {text} as a placeholder for the selected text. Tone and length settings will be automatically added.
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <label for="improvePrompt">Improve Text Prompt</label>
+          <textarea id="improvePrompt" placeholder="Enter your custom prompt for improving text..."></textarea>
+          <div class="help-text">
+            This prompt will be used when improving text. Use {text} as a placeholder for the selected text. Tone and length settings will be automatically added.
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <label for="summarizePrompt">Summarize Text Prompt</label>
+          <textarea id="summarizePrompt" placeholder="Enter your custom prompt for summarizing text..."></textarea>
+          <div class="help-text">
+            This prompt will be used when summarizing text. Use {text} as a placeholder for the selected text. Tone and length settings will be automatically added.
+          </div>
+        </div>
+        
+        <button class="save-btn" id="saveBtn2">Save Settings</button>
+      </div>
+    </div>
+    
+    <!-- Site Contexts Tab -->
+    <div class="tab-content" id="sites-tab">
+      <div class="card">
+        <div class="card-title">Per-Site Context</div>
+        <p class="help-text">Set audience context for specific websites to get more accurate AI responses.</p>
+        
+        <div class="form-group">
+          <div id="siteContextsContainer">
+            <!-- Site contexts will be dynamically added here -->
+          </div>
+          <button type="button" id="addSiteContext" class="add-btn">+ Add Site Context</button>
+        </div>
+        
+        <button class="save-btn" id="saveBtn3">Save Settings</button>
+      </div>
+    </div>
+  </div>
+  
+  <script src="options.js"></script>
+</body>
+</html>
