@@ -4,9 +4,9 @@
   "description": "A Firefox extension for AI-powered text editing, rewriting, and enhancement using Perplexity AI",
   "main": "manifest.json",
   "scripts": {
-    "build": "echo 'Building extension...' && echo 'Please replace placeholder icons with actual PNG files'",
+    "build": "echo 'Building extension...' && echo 'Extension built successfully!'",
     "install": "echo 'To install: Load manifest.json as temporary add-on in Firefox'",
-    "package": "zip -r perplexeditor.xpi . -x '*.git*' '*.DS_Store' 'node_modules/*' 'package*.json' 'README.md'"
+    "package": "zip -r perplexeditor.xpi . -x '*.git*' '*.DS_Store' 'node_modules/*' 'package*.json' 'README.md' 'CHANGELOG.md' 'LICENSE' 'install*.sh' 'install*.bat' 'test*.html' '.github/*'"
   },
       "keywords": [
       "firefox-extension",

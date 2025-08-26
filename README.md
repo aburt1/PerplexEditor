@@ -130,14 +130,48 @@ npm run package
 
 # Install as temporary add-on
 npm run install
+
+
 ```
+
+### Automated Releases with GitHub Actions
+
+This project uses GitHub Actions to automatically build and release the Firefox extension as an XPI file on every commit.
+
+#### How It Works
+1. **Automatic Triggers**: Every push to any branch automatically triggers the workflow
+2. **Automatic Building**: The workflow builds the extension and packages it into an XPI file
+3. **Automatic Release Creation**: A new GitHub release is automatically created with the XPI file attached
+4. **User Downloads**: Users can download the XPI file directly from the releases page
+
+#### Creating a Release
+```bash
+# Simply commit and push your changes
+git add .
+git commit -m "Add new feature or fix bug"
+git push origin main
+
+# GitHub Actions will automatically:
+# - Build the extension
+# - Package it as perplexeditor.xpi
+# - Create a release with the XPI file
+# - Tag it with a unique identifier
+```
+
+#### Workflow Features
+- **Fully Automated**: No manual intervention needed - releases happen on every commit
+- **Cross-platform**: Builds on Ubuntu (Linux) for maximum compatibility
+- **Dependency Management**: Uses `npm ci` for reliable builds
+- **Smart Packaging**: Excludes development files and documentation from the XPI
+- **Professional Releases**: Creates detailed release notes with installation instructions
+- **Unique Releases**: Each commit gets its own release with commit hash and timestamp
 
 ### Development Workflow
 1. Make changes to source files
-2. Load as temporary add-on in Firefox
+2. Load as temporary add-on in Firefox for testing
 3. Test functionality
-4. Build package when ready
-5. Create GitHub release
+4. Commit and push changes
+5. GitHub Actions automatically creates a release with the XPI file
 
 ## 🤝 Contributing
 

@@ -1,53 +1,77 @@
-name: Build and Release Extension
+name: Build and Release Firefox Extension
 
 on:
   push:
-    tags:
-      - 'v*'
+    branches:
+      - '**' # Trigger on any branch push
 
 jobs:
-  build:
+  build-and-release:
     runs-on: ubuntu-latest
     
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '18'
+      - name: Checkout code
+        uses: actions/checkout@v4
         
-    - name: Install dependencies
-      run: npm install
-      
-    - name: Build extension package
-      run: npm run package
-      
-    - name: Create release
-      uses: softprops/action-gh-release@v1
-      with:
-        files: perplexeditor.xpi
-        name: Release ${{ github.ref_name }}
-        body: |
-          ## What's New
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
           
-          This release includes:
-          - Bug fixes and improvements
-          - Enhanced prompt engineering
-          - Better selection handling
-          
-          ## Installation
-          
-          1. Download the `perplexeditor.xpi` file above
-          2. Drag and drop it into Firefox
-          3. Click "Add" when prompted
-          
-          ## Changes
-          
-          See the [changelog](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md) for detailed information.
-          
-        draft: false
-        prerelease: false
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Install dependencies
+        run: npm ci
+        
+      - name: Build extension
+        run: npm run build
+        
+      - name: Package extension to XPI
+        run: |
+          # Create XPI file (Firefox extension package)
+          zip -r perplexeditor.xpi . \
+            -x '*.git*' \
+            -x '*.DS_Store' \
+            -x 'node_modules/*' \
+            -x 'package*.json' \
+            -x 'README.md' \
+            -x 'CHANGELOG.md' \
+            -x 'LICENSE' \
+            -x 'install*.sh' \
+            -x 'install*.bat' \
+            -x 'test*.html' \
+            -x '.github/*'
+            
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: perplexeditor.xpi
+          name: Release ${{ github.sha }}
+          body: |
+            ## PerplexEditor Firefox Extension
+            
+            ### What's New
+            - Automated release from GitHub Actions
+            - Firefox extension packaged as XPI file
+            - Built from commit: ${{ github.sha }}
+            - Branch: ${{ github.ref_name }}
+            
+            ### Installation
+            1. Download the `perplexeditor.xpi` file
+            2. Open Firefox and go to `about:addons`
+            3. Click the gear icon and select "Install Add-on From File"
+            4. Choose the downloaded XPI file
+            
+            ### Features
+            - AI-powered text editing and rewriting
+            - Context menu integration
+            - Keyboard shortcuts for quick access
+            - Powered by Perplexity AI
+            
+            ### Build Info
+            - **Commit**: ${{ github.sha }}
+            - **Branch**: ${{ github.ref_name }}
+            - **Build Date**: ${{ github.event.head_commit.timestamp }}
+          draft: false
+          prerelease: false
+          tag_name: release-${{ github.sha }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
