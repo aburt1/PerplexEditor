@@ -742,45 +742,90 @@ function openInPageActionMenu() {
 
 // Kuali-specific functions
 function injectKualiContextInput() {
-  // Look for "Step Label" or similar elements
-  const stepLabelElements = document.querySelectorAll('label, span, div');
-  let stepLabelElement = null;
-  
-  for (const element of stepLabelElements) {
-    if (element.textContent && element.textContent.toLowerCase().includes('step label')) {
-      stepLabelElement = element;
-      break;
-    }
-  }
-  
-  if (!stepLabelElement) {
-    console.log('Step Label element not found');
-    return;
-  }
-  
   // Check if we already injected the input
   if (document.getElementById('kuali-context-input')) {
     return;
   }
-  
+
+  // Multiple injection strategies for maximum reliability
+  let targetContainer = null;
+  let injectionMethod = '';
+
+  // Strategy 1: Look for the exact text "NOTIFICATION STEP OPTIONS" and find its container
+  if (!targetContainer) {
+    const titleElements = document.querySelectorAll('h1, h2, h3, h4, h5, h6, div, span');
+    for (const element of titleElements) {
+      if (element.textContent && element.textContent.trim() === 'NOTIFICATION STEP OPTIONS') {
+        // Find the closest form or main container
+        targetContainer = element.closest('form') || element.closest('[class*="form"]') || element.closest('[class*="container"]') || element.parentElement;
+        injectionMethod = 'title text search';
+        break;
+      }
+    }
+  }
+
+  // Strategy 2: Look for "Step Label" input field and inject above its container
+  if (!targetContainer) {
+    const stepLabelInputs = document.querySelectorAll('input[placeholder*="Notification"], input[placeholder*="Step"]');
+    for (const input of stepLabelInputs) {
+      if (input.placeholder && input.placeholder.includes('Notification')) {
+        // Find the container that holds this input
+        targetContainer = input.closest('div') || input.closest('section') || input.parentElement;
+        injectionMethod = 'step label input search';
+        break;
+      }
+    }
+  }
+
+  // Strategy 3: Look for form elements with notification-related content
+  if (!targetContainer) {
+    const forms = document.querySelectorAll('form, [class*="form"], [class*="workflow"]');
+    for (const form of forms) {
+      const text = form.textContent || '';
+      if (text.includes('Step Label') && text.includes('Email Subject') && text.includes('Email Body')) {
+        targetContainer = form;
+        injectionMethod = 'form content search';
+        break;
+      }
+    }
+  }
+
+  // Strategy 4: Use MutationObserver to wait for the content to appear (for React apps)
+  if (!targetContainer) {
+    console.log('Content not found, setting up observer for dynamic content...');
+    setupMutationObserver();
+    return;
+  }
+
+  if (!targetContainer) {
+    console.log('No suitable container found for Kuali context input');
+    return;
+  }
+
+  console.log(`Found container using method: ${injectionMethod}`);
+
   // Create the context input field
   const contextInput = document.createElement('div');
   contextInput.id = 'kuali-context-input';
   contextInput.style.cssText = `
-    margin-bottom: 15px;
-    padding: 10px;
+    margin: 15px 0;
+    padding: 15px;
     background: #f8f9fa;
     border: 1px solid #dee2e6;
-    border-radius: 4px;
+    border-radius: 6px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    position: relative;
+    z-index: 1000;
   `;
   
   const label = document.createElement('label');
   label.textContent = 'Email Notification Context:';
   label.style.cssText = `
     display: block;
-    margin-bottom: 5px;
-    font-weight: 500;
+    margin-bottom: 8px;
+    font-weight: 600;
     color: #495057;
+    font-size: 14px;
   `;
   
   const textarea = document.createElement('textarea');
@@ -788,25 +833,28 @@ function injectKualiContextInput() {
   textarea.style.cssText = `
     width: 100%;
     min-height: 80px;
-    padding: 8px;
+    padding: 10px;
     border: 1px solid #ced4da;
     border-radius: 4px;
     font-family: inherit;
     font-size: 14px;
     resize: vertical;
+    box-sizing: border-box;
   `;
   
   const generateBtn = document.createElement('button');
   generateBtn.textContent = 'Generate Notification';
   generateBtn.style.cssText = `
-    margin-top: 8px;
-    padding: 6px 12px;
+    margin-top: 10px;
+    padding: 8px 16px;
     background: #007bff;
     color: white;
     border: none;
     border-radius: 4px;
     cursor: pointer;
     font-size: 14px;
+    font-weight: 500;
+    transition: background-color 0.2s;
   `;
   generateBtn.onmouseenter = () => { generateBtn.style.background = '#0056b3'; };
   generateBtn.onmouseleave = () => { generateBtn.style.background = '#007bff'; };
@@ -844,8 +892,57 @@ function injectKualiContextInput() {
   contextInput.appendChild(textarea);
   contextInput.appendChild(generateBtn);
   
-  // Insert the context input above the step label
-  stepLabelElement.parentNode.insertBefore(contextInput, stepLabelElement);
+  // Insert at the beginning of the target container
+  if (targetContainer.firstChild) {
+    targetContainer.insertBefore(contextInput, targetContainer.firstChild);
+  } else {
+    targetContainer.appendChild(contextInput);
+  }
+  
+  console.log(`Kuali context input injected successfully using method: ${injectionMethod}`);
+}
+
+// Setup MutationObserver for React apps that load content dynamically
+function setupMutationObserver() {
+  if (window.kualiObserver) {
+    return; // Already set up
+  }
+
+  const observer = new MutationObserver((mutations) => {
+    for (const mutation of mutations) {
+      if (mutation.type === 'childList') {
+        // Check if the notification content has appeared
+        const hasNotificationContent = document.querySelector('*:contains("NOTIFICATION STEP OPTIONS")') || 
+                                     document.querySelector('*:contains("Step Label")') ||
+                                     document.querySelector('input[placeholder*="Notification"]');
+        
+        if (hasNotificationContent) {
+          console.log('Notification content detected, attempting injection...');
+          setTimeout(() => injectKualiContextInput(), 100); // Small delay to ensure DOM is ready
+          observer.disconnect();
+          window.kualiObserver = null;
+          break;
+        }
+      }
+    }
+  });
+
+  observer.observe(document.body, {
+    childList: true,
+    subtree: true
+  });
+
+  window.kualiObserver = observer;
+  
+  // Also try injection after a delay in case content is already there
+  setTimeout(() => {
+    if (document.getElementById('kuali-context-input')) {
+      observer.disconnect();
+      window.kualiObserver = null;
+    } else {
+      injectKualiContextInput();
+    }
+  }, 2000);
 }
 
 async function processKualiNotification(context, config) {
@@ -989,6 +1086,56 @@ function displayKualiNotificationResult(result) {
     modalContent.appendChild(fieldDiv);
   });
   
+  // Add Accept/Deny buttons at the bottom
+  const buttonContainer = document.createElement('div');
+  buttonContainer.style.cssText = `
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    margin-top: 20px;
+    padding-top: 15px;
+    border-top: 1px solid #dee2e6;
+  `;
+  
+  const denyBtn = document.createElement('button');
+  denyBtn.textContent = 'Deny';
+  denyBtn.style.cssText = `
+    padding: 8px 16px;
+    background: #6c757d;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+  `;
+  denyBtn.onmouseenter = () => { denyBtn.style.background = '#5a6268'; };
+  denyBtn.onmouseleave = () => { denyBtn.style.background = '#6c757d'; };
+  denyBtn.onclick = () => modal.remove();
+  
+  const acceptBtn = document.createElement('button');
+  acceptBtn.textContent = 'Accept & Fill Form';
+  acceptBtn.style.cssText = `
+    padding: 8px 16px;
+    background: #28a745;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+  `;
+  acceptBtn.onmouseenter = () => { acceptBtn.style.background = '#218838'; };
+  acceptBtn.onmouseleave = () => { acceptBtn.style.background = '#28a745'; };
+  acceptBtn.onclick = () => {
+    fillKualiFormFields(fields);
+    modal.remove();
+  };
+  
+  buttonContainer.appendChild(denyBtn);
+  buttonContainer.appendChild(acceptBtn);
+  modalContent.appendChild(buttonContainer);
+  
   modal.appendChild(modalContent);
   document.body.appendChild(modal);
   
@@ -999,3 +1146,137 @@ function displayKualiNotificationResult(result) {
     }
   };
 }
+
+// Function to fill Kuali form fields with generated content
+function fillKualiFormFields(fields) {
+  console.log('Filling Kuali form fields with:', fields);
+  
+  try {
+    // Map our field names to potential Kuali form field identifiers
+    const fieldMappings = {
+      'SUBJECT': ['input[placeholder*="Subject"]', 'input[name*="subject"]', 'input[id*="subject"]', 'textarea[placeholder*="Subject"]'],
+      'GREETING': ['input[placeholder*="Greeting"]', 'input[name*="greeting"]', 'input[id*="greeting"]', 'textarea[placeholder*="Greeting"]'],
+      'MESSAGE': ['input[placeholder*="Message"]', 'input[name*="message"]', 'input[id*="message"]', 'textarea[placeholder*="Message"]', 'input[placeholder*="Body"]', 'textarea[placeholder*="Body"]'],
+      'ACTION': ['input[placeholder*="Action"]', 'input[name*="action"]', 'input[id*="action"]', 'textarea[placeholder*="Action"]'],
+      'DEADLINE': ['input[placeholder*="Deadline"]', 'input[name*="deadline"]', 'input[id*="deadline"]', 'input[type="date"]', 'input[placeholder*="Due"]'],
+      'CONTACT': ['input[placeholder*="Contact"]', 'input[name*="contact"]', 'input[id*="contact"]', 'textarea[placeholder*="Contact"]'],
+      'CLOSING': ['input[placeholder*="Closing"]', 'input[name*="closing"]', 'input[id*="closing"]', 'textarea[placeholder*="Closing"]']
+    };
+    
+    let filledCount = 0;
+    
+    // Try to fill each field
+    Object.entries(fields).forEach(([key, value]) => {
+      const selectors = fieldMappings[key] || [];
+      let fieldFound = false;
+      
+      for (const selector of selectors) {
+        const field = document.querySelector(selector);
+        if (field) {
+          // Set the value
+          field.value = value;
+          
+          // Trigger change events to ensure the form recognizes the change
+          field.dispatchEvent(new Event('input', { bubbles: true }));
+          field.dispatchEvent(new Event('change', { bubbles: true }));
+          
+          console.log(`Filled field "${key}" with value: "${value}"`);
+          fieldFound = true;
+          filledCount++;
+          break;
+        }
+      }
+      
+      if (!fieldFound) {
+        console.log(`Could not find field for "${key}"`);
+      }
+    });
+    
+    if (filledCount > 0) {
+      showNotification(`Successfully filled ${filledCount} form fields!`, 'success');
+    } else {
+      showNotification('No matching form fields found to fill', 'warning');
+    }
+    
+  } catch (error) {
+    console.error('Error filling Kuali form fields:', error);
+    showNotification('Error filling form fields', 'error');
+  }
+}
+
+// Automatic injection for Kuali pages
+function setupAutomaticInjection() {
+  if (window.location.hostname.includes('kuali')) {
+    console.log('Kuali page detected, setting up automatic injection...');
+    
+    // Function to check if we're on a notification page and inject
+    function checkAndInject() {
+      // Look for notification-related content
+      const hasNotificationContent = document.querySelector('*:contains("NOTIFICATION STEP OPTIONS")') || 
+                                   document.querySelector('*:contains("Step Label")') ||
+                                   document.querySelector('input[placeholder*="Notification"]') ||
+                                   document.querySelector('*:contains("Email Subject")') ||
+                                   document.querySelector('*:contains("Email Body")');
+      
+      if (hasNotificationContent) {
+        console.log('Notification content found, injecting context input...');
+        injectKualiContextInput();
+        return true;
+      }
+      return false;
+    }
+    
+    // Try immediate injection if content is already there
+    if (!checkAndInject()) {
+      // Set up multiple injection attempts
+      let attempts = 0;
+      const maxAttempts = 10;
+      
+      const attemptInjection = () => {
+        attempts++;
+        if (checkAndInject()) {
+          console.log('Successfully injected on attempt', attempts);
+          return;
+        }
+        
+        if (attempts < maxAttempts) {
+          // Try again in 1 second
+          setTimeout(attemptInjection, 1000);
+        } else {
+          console.log('Max attempts reached, setting up observer for dynamic content');
+          setupMutationObserver();
+        }
+      };
+      
+      // Start attempting injection
+      setTimeout(attemptInjection, 500);
+    }
+  }
+}
+
+// Initialize automatic injection when the page loads
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', setupAutomaticInjection);
+} else {
+  setupAutomaticInjection();
+}
+
+// Also try injection when the page becomes visible (for single-page apps)
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden && window.location.hostname.includes('kuali')) {
+    setTimeout(setupAutomaticInjection, 500);
+  }
+});
+
+// Listen for navigation events in single-page apps
+let lastUrl = location.href;
+new MutationObserver(() => {
+  const url = location.href;
+  if (url !== lastUrl) {
+    lastUrl = url;
+    if (window.location.hostname.includes('kuali')) {
+      console.log('URL changed, attempting injection...');
+      setTimeout(setupAutomaticInjection, 1000);
+    }
+  }
+}).observe(document, { subtree: true, childList: true });
