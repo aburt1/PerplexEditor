@@ -1129,7 +1129,26 @@ function displayKualiNotificationResult(result) {
   acceptBtn.onmouseleave = () => { acceptBtn.style.background = '#28a745'; };
   acceptBtn.onclick = () => {
     fillKualiFormFields(fields);
-    modal.remove();
+    // Don't close the modal - let user see what was filled
+    // Change button text to show completion
+    acceptBtn.textContent = '✓ Fields Filled Successfully';
+    acceptBtn.style.background = '#28a745';
+    acceptBtn.disabled = true;
+    
+    // Add a note that the modal can be closed
+    const note = document.createElement('div');
+    note.textContent = 'Form fields have been filled. You can now close this window.';
+    note.style.cssText = `
+      margin-top: 10px;
+      padding: 8px;
+      background: #d4edda;
+      border: 1px solid #c3e6cb;
+      border-radius: 4px;
+      color: #155724;
+      font-size: 14px;
+      text-align: center;
+    `;
+    buttonContainer.appendChild(note);
   };
   
   buttonContainer.appendChild(denyBtn);
@@ -1152,18 +1171,67 @@ function fillKualiFormFields(fields) {
   console.log('Filling Kuali form fields with:', fields);
   
   try {
-    // Map our field names to potential Kuali form field identifiers
+    // More specific field mappings for Kuali notification step
     const fieldMappings = {
-      'SUBJECT': ['input[placeholder*="Subject"]', 'input[name*="subject"]', 'input[id*="subject"]', 'textarea[placeholder*="Subject"]'],
-      'GREETING': ['input[placeholder*="Greeting"]', 'input[name*="greeting"]', 'input[id*="greeting"]', 'textarea[placeholder*="Greeting"]'],
-      'MESSAGE': ['input[placeholder*="Message"]', 'input[name*="message"]', 'input[id*="message"]', 'textarea[placeholder*="Message"]', 'input[placeholder*="Body"]', 'textarea[placeholder*="Body"]'],
-      'ACTION': ['input[placeholder*="Action"]', 'input[name*="action"]', 'input[id*="action"]', 'textarea[placeholder*="Action"]'],
-      'DEADLINE': ['input[placeholder*="Deadline"]', 'input[name*="deadline"]', 'input[id*="deadline"]', 'input[type="date"]', 'input[placeholder*="Due"]'],
-      'CONTACT': ['input[placeholder*="Contact"]', 'input[name*="contact"]', 'input[id*="contact"]', 'textarea[placeholder*="Contact"]'],
-      'CLOSING': ['input[placeholder*="Closing"]', 'input[name*="closing"]', 'input[id*="closing"]', 'textarea[placeholder*="Closing"]']
+      'SUBJECT': [
+        'input[placeholder*="Email Subject"]',
+        'input[placeholder*="Subject"]', 
+        'input[name*="subject"]', 
+        'input[id*="subject"]', 
+        'textarea[placeholder*="Subject"]',
+        'input[placeholder*="Notification"]'
+      ],
+      'GREETING': [
+        'input[placeholder*="Greeting"]', 
+        'input[name*="greeting"]', 
+        'input[id*="greeting"]', 
+        'textarea[placeholder*="Greeting"]',
+        'input[placeholder*="Salutation"]'
+      ],
+      'MESSAGE': [
+        'textarea[placeholder*="Email Body"]',
+        'textarea[placeholder*="Body"]',
+        'textarea[placeholder*="Message"]', 
+        'textarea[name*="message"]', 
+        'textarea[id*="message"]',
+        'input[placeholder*="Email Body"]',
+        'input[placeholder*="Body"]'
+      ],
+      'ACTION': [
+        'input[placeholder*="Action Required"]',
+        'input[placeholder*="Action"]', 
+        'input[name*="action"]', 
+        'input[id*="action"]', 
+        'textarea[placeholder*="Action"]',
+        'input[placeholder*="Next Steps"]'
+      ],
+      'DEADLINE': [
+        'input[placeholder*="Deadline"]', 
+        'input[name*="deadline"]', 
+        'input[id*="deadline"]', 
+        'input[type="date"]', 
+        'input[placeholder*="Due Date"]',
+        'input[placeholder*="Due"]'
+      ],
+      'CONTACT': [
+        'input[placeholder*="Contact Information"]',
+        'input[placeholder*="Contact"]', 
+        'input[name*="contact"]', 
+        'input[id*="contact"]', 
+        'textarea[placeholder*="Contact"]',
+        'input[placeholder*="Contact Person"]'
+      ],
+      'CLOSING': [
+        'input[placeholder*="Closing"]', 
+        'input[name*="closing"]', 
+        'input[id*="closing"]', 
+        'textarea[placeholder*="Closing"]',
+        'input[placeholder*="Signature"]'
+      ]
     };
     
     let filledCount = 0;
+    const filledFields = [];
     
     // Try to fill each field
     Object.entries(fields).forEach(([key, value]) => {
@@ -1183,6 +1251,7 @@ function fillKualiFormFields(fields) {
           console.log(`Filled field "${key}" with value: "${value}"`);
           fieldFound = true;
           filledCount++;
+          filledFields.push(key);
           break;
         }
       }
@@ -1193,14 +1262,17 @@ function fillKualiFormFields(fields) {
     });
     
     if (filledCount > 0) {
-      showNotification(`Successfully filled ${filledCount} form fields!`, 'success');
+      showNotification(`Successfully filled ${filledCount} form fields: ${filledFields.join(', ')}`, 'success');
     } else {
       showNotification('No matching form fields found to fill', 'warning');
     }
     
+    return filledCount;
+    
   } catch (error) {
     console.error('Error filling Kuali form fields:', error);
     showNotification('Error filling form fields', 'error');
+    return 0;
   }
 }
 
