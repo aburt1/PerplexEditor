@@ -5,6 +5,10 @@ on:
     branches:
       - '**' # Trigger on any branch push
 
+permissions:
+  contents: write
+  actions: read
+
 jobs:
   build-and-release:
     runs-on: ubuntu-latest
@@ -40,6 +44,13 @@ jobs:
             -x 'test*.html' \
             -x '.github/*'
             
+      - name: List files for debugging
+        run: |
+          echo "Current directory contents:"
+          ls -la
+          echo "XPI file details:"
+          ls -la *.xpi || echo "No XPI file found"
+          
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
@@ -72,6 +83,6 @@ jobs:
             - **Build Date**: ${{ github.event.head_commit.timestamp }}
           draft: false
           prerelease: false
-          tag_name: release-${{ github.sha }}
+          tag_name: release-${{ github.run_number }}-${{ github.sha }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
