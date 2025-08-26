@@ -139,7 +139,7 @@ async function processTextWithPerplexity(text, action, config) {
     'reword-text': config.rewordPrompt,
     'improve-text': config.improvePrompt,
     'summarize-text': config.summarizePrompt,
-    'kuali-notification': config.kualiNotificationPrompt
+    'kuali-notification': 'Generate email notification with Subject and Body'
   };
   
   let prompt = prompts[action] || config.rewritePrompt;
@@ -868,8 +868,7 @@ function injectKualiContextInput() {
     
     try {
       const config = await browser.storage.sync.get({
-        apiKey: '',
-        kualiNotificationPrompt: ''
+        apiKey: ''
       });
       
       if (!config.apiKey) {
@@ -947,7 +946,17 @@ function setupMutationObserver() {
 
 async function processKualiNotification(context, config) {
   try {
-    const prompt = config.kualiNotificationPrompt + context;
+    // Simplified prompt for just Subject and Body
+    const prompt = `You are an expert at creating professional email notifications. Based on the provided context, create a concise email notification with:
+
+1. **SUBJECT**: A clear, concise subject line (max 60 characters)
+2. **BODY**: A professional email body (2-3 sentences)
+
+Format your response exactly as:
+SUBJECT: [Your subject here]
+BODY: [Your email body here]
+
+Context: ${context}`;
     
     const requestBody = {
       model: 'sonar',
@@ -957,7 +966,7 @@ async function processKualiNotification(context, config) {
           content: prompt
         }
       ],
-      max_tokens: 1500,
+      max_tokens: 500,
       temperature: 0.7
     };
     
@@ -987,7 +996,7 @@ async function processKualiNotification(context, config) {
 }
 
 function displayKualiNotificationResult(result) {
-  // Parse the result into separate fields
+  // Parse the result into just Subject and Body
   const fields = {};
   const lines = result.split('\n');
   
@@ -995,285 +1004,152 @@ function displayKualiNotificationResult(result) {
     if (line.includes(':')) {
       const [key, ...valueParts] = line.split(':');
       const value = valueParts.join(':').trim();
-      if (value && value !== '[Your subject line here]' && value !== '[Your greeting here]' && 
-          value !== '[Your main message here]' && value !== '[Action required here]' && 
-          value !== '[Deadline here]' && value !== '[Contact info here]' && value !== '[Your closing here]') {
+      if (value && (key.trim() === 'SUBJECT' || key.trim() === 'BODY')) {
         fields[key.trim()] = value;
       }
     }
   }
   
-  // Create a modal to display the results
-  const modal = document.createElement('div');
-  modal.id = 'kuali-notification-modal';
-  modal.style.cssText = `
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.5);
-    z-index: 2147483646;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  `;
-  
-  const modalContent = document.createElement('div');
-  modalContent.style.cssText = `
-    background: white;
-    padding: 20px;
-    border-radius: 8px;
-    max-width: 600px;
-    max-height: 80vh;
-    overflow-y: auto;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  `;
-  
-  const title = document.createElement('h3');
-  title.textContent = 'Generated Email Notification';
-  title.style.cssText = `
-    margin: 0 0 20px 0;
-    color: #333;
-  `;
-  
-  const closeBtn = document.createElement('button');
-  closeBtn.textContent = '×';
-  closeBtn.style.cssText = `
-    position: absolute;
-    top: 10px;
-    right: 15px;
-    background: none;
-    border: none;
-    font-size: 24px;
-    cursor: pointer;
-    color: #666;
-  `;
-  closeBtn.onclick = () => modal.remove();
-  
-  modalContent.appendChild(closeBtn);
-  modalContent.appendChild(title);
-  
-  // Display each field
-  Object.entries(fields).forEach(([key, value]) => {
-    const fieldDiv = document.createElement('div');
-    fieldDiv.style.cssText = `
-      margin-bottom: 15px;
-    `;
-    
-    const fieldLabel = document.createElement('label');
-    fieldLabel.textContent = key + ':';
-    fieldLabel.style.cssText = `
-      display: block;
-      font-weight: 500;
-      margin-bottom: 5px;
-      color: #495057;
-    `;
-    
-    const fieldValue = document.createElement('div');
-    fieldValue.textContent = value;
-    fieldValue.style.cssText = `
-      padding: 8px;
-      background: #f8f9fa;
-      border: 1px solid #dee2e6;
-      border-radius: 4px;
-      min-height: 20px;
-      white-space: pre-wrap;
-    `;
-    
-    fieldDiv.appendChild(fieldLabel);
-    fieldDiv.appendChild(fieldValue);
-    modalContent.appendChild(fieldDiv);
-  });
-  
-  // Add Accept/Deny buttons at the bottom
-  const buttonContainer = document.createElement('div');
-  buttonContainer.style.cssText = `
-    display: flex;
-    gap: 10px;
-    justify-content: flex-end;
-    margin-top: 20px;
-    padding-top: 15px;
-    border-top: 1px solid #dee2e6;
-  `;
-  
-  const denyBtn = document.createElement('button');
-  denyBtn.textContent = 'Deny';
-  denyBtn.style.cssText = `
-    padding: 8px 16px;
-    background: #6c757d;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 14px;
-    font-weight: 500;
-  `;
-  denyBtn.onmouseenter = () => { denyBtn.style.background = '#5a6268'; };
-  denyBtn.onmouseleave = () => { denyBtn.style.background = '#6c757d'; };
-  denyBtn.onclick = () => modal.remove();
-  
-  const acceptBtn = document.createElement('button');
-  acceptBtn.textContent = 'Accept & Fill Form';
-  acceptBtn.style.cssText = `
-    padding: 8px 16px;
-    background: #28a745;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 14px;
-    font-weight: 500;
-  `;
-  acceptBtn.onmouseenter = () => { acceptBtn.style.background = '#218838'; };
-  acceptBtn.onmouseleave = () => { acceptBtn.style.background = '#28a745'; };
-  acceptBtn.onclick = () => {
-    fillKualiFormFields(fields);
-    // Don't close the modal - let user see what was filled
-    // Change button text to show completion
-    acceptBtn.textContent = '✓ Fields Filled Successfully';
-    acceptBtn.style.background = '#28a745';
-    acceptBtn.disabled = true;
-    
-    // Add a note that the modal can be closed
-    const note = document.createElement('div');
-    note.textContent = 'Form fields have been filled. You can now close this window.';
-    note.style.cssText = `
-      margin-top: 10px;
-      padding: 8px;
-      background: #d4edda;
-      border: 1px solid #c3e6cb;
-      border-radius: 4px;
-      color: #155724;
-      font-size: 14px;
-      text-align: center;
-    `;
-    buttonContainer.appendChild(note);
-  };
-  
-  buttonContainer.appendChild(denyBtn);
-  buttonContainer.appendChild(acceptBtn);
-  modalContent.appendChild(buttonContainer);
-  
-  modal.appendChild(modalContent);
-  document.body.appendChild(modal);
-  
-  // Close modal when clicking outside
-  modal.onclick = (e) => {
-    if (e.target === modal) {
-      modal.remove();
+  // Directly fill the Kuali form fields
+  if (Object.keys(fields).length > 0) {
+    const success = fillKualiFormFieldsDirectly(fields);
+    if (success) {
+      showNotification('Email notification generated and filled successfully!', 'success');
+    } else {
+      showNotification('Generated content but could not fill form fields', 'warning');
     }
-  };
+  } else {
+    showNotification('Failed to parse generated content', 'error');
+  }
 }
 
-// Function to fill Kuali form fields with generated content
-function fillKualiFormFields(fields) {
-  console.log('Filling Kuali form fields with:', fields);
+// Function to directly fill Kuali form fields with generated content
+function fillKualiFormFieldsDirectly(fields) {
+  console.log('Directly filling Kuali form fields with:', fields);
   
   try {
-    // More specific field mappings for Kuali notification step
-    const fieldMappings = {
-      'SUBJECT': [
-        'input[placeholder*="Email Subject"]',
-        'input[placeholder*="Subject"]', 
-        'input[name*="subject"]', 
-        'input[id*="subject"]', 
-        'textarea[placeholder*="Subject"]',
-        'input[placeholder*="Notification"]'
-      ],
-      'GREETING': [
-        'input[placeholder*="Greeting"]', 
-        'input[name*="greeting"]', 
-        'input[id*="greeting"]', 
-        'textarea[placeholder*="Greeting"]',
-        'input[placeholder*="Salutation"]'
-      ],
-      'MESSAGE': [
-        'textarea[placeholder*="Email Body"]',
-        'textarea[placeholder*="Body"]',
-        'textarea[placeholder*="Message"]', 
-        'textarea[name*="message"]', 
-        'textarea[id*="message"]',
-        'input[placeholder*="Email Body"]',
-        'input[placeholder*="Body"]'
-      ],
-      'ACTION': [
-        'input[placeholder*="Action Required"]',
-        'input[placeholder*="Action"]', 
-        'input[name*="action"]', 
-        'input[id*="action"]', 
-        'textarea[placeholder*="Action"]',
-        'input[placeholder*="Next Steps"]'
-      ],
-      'DEADLINE': [
-        'input[placeholder*="Deadline"]', 
-        'input[name*="deadline"]', 
-        'input[id*="deadline"]', 
-        'input[type="date"]', 
-        'input[placeholder*="Due Date"]',
-        'input[placeholder*="Due"]'
-      ],
-      'CONTACT': [
-        'input[placeholder*="Contact Information"]',
-        'input[placeholder*="Contact"]', 
-        'input[name*="contact"]', 
-        'input[id*="contact"]', 
-        'textarea[placeholder*="Contact"]',
-        'input[placeholder*="Contact Person"]'
-      ],
-      'CLOSING': [
-        'input[placeholder*="Closing"]', 
-        'input[name*="closing"]', 
-        'input[id*="closing"]', 
-        'textarea[placeholder*="Closing"]',
-        'input[placeholder*="Signature"]'
-      ]
-    };
-    
     let filledCount = 0;
     const filledFields = [];
     
-    // Try to fill each field
-    Object.entries(fields).forEach(([key, value]) => {
-      const selectors = fieldMappings[key] || [];
-      let fieldFound = false;
-      
-      for (const selector of selectors) {
-        const field = document.querySelector(selector);
-        if (field) {
-          // Set the value
-          field.value = value;
-          
-          // Trigger change events to ensure the form recognizes the change
-          field.dispatchEvent(new Event('input', { bubbles: true }));
-          field.dispatchEvent(new Event('change', { bubbles: true }));
-          
-          console.log(`Filled field "${key}" with value: "${value}"`);
-          fieldFound = true;
-          filledCount++;
-          filledFields.push(key);
-          break;
-        }
+    // Strategy 1: Look for Subject field (Email Subject)
+    if (fields.SUBJECT) {
+      const subjectField = findSubjectField();
+      if (subjectField) {
+        subjectField.value = fields.SUBJECT;
+        triggerFieldEvents(subjectField);
+        console.log(`Filled SUBJECT field with: "${fields.SUBJECT}"`);
+        filledCount++;
+        filledFields.push('SUBJECT');
       }
-      
-      if (!fieldFound) {
-        console.log(`Could not find field for "${key}"`);
-      }
-    });
-    
-    if (filledCount > 0) {
-      showNotification(`Successfully filled ${filledCount} form fields: ${filledFields.join(', ')}`, 'success');
-    } else {
-      showNotification('No matching form fields found to fill', 'warning');
     }
     
-    return filledCount;
+    // Strategy 2: Look for Body field (Email Body)
+    if (fields.BODY) {
+      const bodyField = findBodyField();
+      if (bodyField) {
+        bodyField.value = fields.BODY;
+        triggerFieldEvents(bodyField);
+        console.log(`Filled BODY field with: "${fields.BODY}"`);
+        filledCount++;
+        filledFields.push('BODY');
+      }
+    }
+    
+    if (filledCount > 0) {
+      console.log(`Successfully filled ${filledCount} fields: ${filledFields.join(', ')}`);
+      return true;
+    } else {
+      console.log('No fields could be filled');
+      return false;
+    }
     
   } catch (error) {
     console.error('Error filling Kuali form fields:', error);
-    showNotification('Error filling form fields', 'error');
-    return 0;
+    return false;
   }
+}
+
+// Helper function to find the Subject field
+function findSubjectField() {
+  // Multiple strategies to find the subject field
+  const selectors = [
+    'input[placeholder*="Email Subject"]',
+    'input[placeholder*="Subject"]',
+    'input[placeholder*="Notification"]',
+    'input[name*="subject"]',
+    'input[id*="subject"]',
+    'textarea[placeholder*="Subject"]'
+  ];
+  
+  for (const selector of selectors) {
+    const field = document.querySelector(selector);
+    if (field) {
+      console.log(`Found subject field using selector: ${selector}`);
+      return field;
+    }
+  }
+  
+  // Fallback: search by text content near the field
+  const allInputs = document.querySelectorAll('input, textarea');
+  for (const input of allInputs) {
+    const parent = input.parentElement;
+    if (parent && parent.textContent && 
+        (parent.textContent.includes('Subject') || parent.textContent.includes('Email Subject'))) {
+      console.log('Found subject field by parent text content');
+      return input;
+    }
+  }
+  
+  return null;
+}
+
+// Helper function to find the Body field
+function findBodyField() {
+  // Multiple strategies to find the body field
+  const selectors = [
+    'textarea[placeholder*="Email Body"]',
+    'textarea[placeholder*="Body"]',
+    'textarea[placeholder*="Message"]',
+    'textarea[name*="body"]',
+    'textarea[name*="message"]',
+    'textarea[id*="body"]',
+    'textarea[id*="message"]',
+    'input[placeholder*="Email Body"]',
+    'input[placeholder*="Body"]'
+  ];
+  
+  for (const selector of selectors) {
+    const field = document.querySelector(selector);
+    if (field) {
+      console.log(`Found body field using selector: ${selector}`);
+      return field;
+    }
+  }
+  
+  // Fallback: search by text content near the field
+  const allTextareas = document.querySelectorAll('textarea');
+  for (const textarea of allTextareas) {
+    const parent = textarea.parentElement;
+    if (parent && parent.textContent && 
+        (parent.textContent.includes('Body') || parent.textContent.includes('Email Body') || parent.textContent.includes('Message'))) {
+      console.log('Found body field by parent text content');
+      return textarea;
+    }
+  }
+  
+  return null;
+}
+
+// Helper function to trigger field events
+function triggerFieldEvents(field) {
+  // Trigger multiple events to ensure the form recognizes the change
+  field.dispatchEvent(new Event('input', { bubbles: true }));
+  field.dispatchEvent(new Event('change', { bubbles: true }));
+  field.dispatchEvent(new Event('blur', { bubbles: true }));
+  
+  // Also try to focus and blur the field
+  field.focus();
+  setTimeout(() => field.blur(), 100);
 }
 
 // Automatic injection for Kuali pages

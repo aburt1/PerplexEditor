@@ -41,17 +41,16 @@ function setupTabs() {
 // Load saved settings from storage
 async function loadSettings() {
   try {
-    const config = await browser.storage.sync.get({
-      apiKey: '',
-      defaultTone: 'neutral',
-      defaultLength: 'same',
-      siteContexts: [],
-      rewritePrompt: 'Rewrite the following text to make it clearer and more engaging. IMPORTANT: Return ONLY the rewritten text. Preserve any existing dashes, hyphens, or symbols that are part of the original text, but do not add new quotes, dashes, explanations, or any other text. Just return the rewritten text:',
-      rewordPrompt: 'Reword the following text using different vocabulary while maintaining the same meaning. IMPORTANT: Return ONLY the reworded text. Preserve any existing dashes, hyphens, or symbols that are part of the original text, but do not add new quotes, dashes, explanations, or any other text. Just return the reworded text:',
-      improvePrompt: 'Improve the following text by enhancing clarity, grammar, and flow. IMPORTANT: Return ONLY the improved text. Preserve any existing dashes, hyphens, or symbols that are part of the original text, but do not add new quotes, dashes, explanations, or any other text. Just return the improved text:',
-      summarizePrompt: 'Provide a concise summary of the following text. IMPORTANT: Return ONLY the summary. Preserve any existing dashes, hyphens, or symbols that are part of the original text, but do not add new quotes, dashes, explanations, or any other text. Just return the summary:',
-      kualiNotificationPrompt: 'You are an expert at creating professional email notifications for Kuali workflow systems. Based on the provided context and text, create a comprehensive email notification that includes separate fields for:\n\n1. **Subject Line**: A clear, concise subject that summarizes the notification\n2. **Greeting**: Professional greeting appropriate for the recipient\n3. **Main Message**: The core notification content in clear, professional language\n4. **Action Required**: What the recipient needs to do (if any)\n5. **Deadline**: When action is needed (if applicable)\n6. **Contact Information**: Who to contact for questions\n7. **Closing**: Professional closing statement\n\nFormat your response exactly as follows (replace the placeholder text with your content):\n\nSUBJECT: [Your subject line here]\nGREETING: [Your greeting here]\nMESSAGE: [Your main message here]\nACTION: [Action required here]\nDEADLINE: [Deadline here]\nCONTACT: [Contact info here]\nCLOSING: [Your closing here]\n\nContext: '
-    });
+      const config = await browser.storage.sync.get({
+    apiKey: '',
+    defaultTone: 'neutral',
+    defaultLength: 'same',
+    siteContexts: [],
+    rewritePrompt: 'Rewrite the following text to make it clearer and more engaging. IMPORTANT: Return ONLY the rewritten text. Preserve any existing dashes, hyphens, or symbols that are part of the original text, but do not add new quotes, dashes, explanations, or any other text. Just return the rewritten text:',
+    rewordPrompt: 'Reword the following text using different vocabulary while maintaining the same meaning. IMPORTANT: Return ONLY the reworded text. Preserve any existing dashes, hyphens, or symbols that are part of the original text, but do not add new quotes, dashes, explanations, or any other text. Just return the reworded text:',
+    improvePrompt: 'Improve the following text by enhancing clarity, grammar, and flow. IMPORTANT: Return ONLY the improved text. Preserve any existing dashes, hyphens, or symbols that are part of the original text, but do not add new quotes, dashes, explanations, or any other text. Just return the improved text:',
+    summarizePrompt: 'Provide a concise summary of the following text. IMPORTANT: Return ONLY the summary. Preserve any existing dashes, hyphens, or symbols that are part of the original text, but do not add new quotes, dashes, explanations, or any other text. Just return the summary:'
+  });
     
     // Populate form fields
     document.getElementById('apiKey').value = config.apiKey;
