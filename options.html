@@ -454,6 +454,14 @@
             This prompt will be used when summarizing text. Use {text} as a placeholder for the selected text. Tone and length settings will be automatically added.
           </div>
         </div>
+
+        <div class="form-group">
+          <label for="kualiNotificationPrompt">Kuali Notification Prompt</label>
+          <textarea id="kualiNotificationPrompt" placeholder="Enter your custom prompt for generating Kuali email notifications..."></textarea>
+          <div class="help-text">
+            This prompt will be used when generating email notifications for Kuali workflow systems. The AI will create structured notifications with separate fields for subject, greeting, message, action, deadline, contact, and closing.
+          </div>
+        </div>
         
         <button class="save-btn" id="saveBtn2">Save Settings</button>
       </div>

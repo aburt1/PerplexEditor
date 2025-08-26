@@ -67,6 +67,19 @@ browser.runtime.onMessage.addListener(async (message) => {
       // Show loading notification
       showNotification('Processing text...', 'info');
       
+      // Special handling for Kuali notifications
+      if (message.action === 'kuali-notification') {
+        const result = await processKualiNotification(message.text, message.config);
+        if (result) {
+          showNotification('Kuali notification generated successfully!', 'success');
+          // Parse and display the result in separate fields
+          displayKualiNotificationResult(result);
+        } else {
+          showNotification('Failed to generate Kuali notification', 'error');
+        }
+        return;
+      }
+      
       // Process the text using Perplexity API
       const result = await processTextWithPerplexity(
         message.text,
@@ -109,6 +122,10 @@ browser.runtime.onMessage.addListener(async (message) => {
   if (message && message.type === 'openActionMenu') {
     try {
       openInPageActionMenu();
+      // Check if we're on a Kuali page and inject the context input if needed
+      if (window.location.hostname.includes('kuali')) {
+        injectKualiContextInput();
+      }
     } catch (e) {
       console.error('Failed to open in-page action menu:', e);
     }
@@ -121,7 +138,8 @@ async function processTextWithPerplexity(text, action, config) {
     'rewrite-text': config.rewritePrompt,
     'reword-text': config.rewordPrompt,
     'improve-text': config.improvePrompt,
-    'summarize-text': config.summarizePrompt
+    'summarize-text': config.summarizePrompt,
+    'kuali-notification': config.kualiNotificationPrompt
   };
   
   let prompt = prompts[action] || config.rewritePrompt;
@@ -640,6 +658,11 @@ function openInPageActionMenu() {
     { id: 'summarize-text', label: 'Summarize' }
   ];
 
+  // Add Kuali notification action if we're on a Kuali page
+  if (window.location.hostname.includes('kuali')) {
+    actions.push({ id: 'kuali-notification', label: 'Generate Notification' });
+  }
+
   actions.forEach(({ id, label }) => {
     const btn = document.createElement('button');
     btn.textContent = label;
@@ -666,7 +689,8 @@ function openInPageActionMenu() {
           rewritePrompt: 'Rewrite the following text to make it clearer and more engaging. IMPORTANT: Return ONLY the rewritten text. Preserve any existing dashes, hyphens, or symbols that are part of the original text, but do not add new quotes, dashes, explanations, or any other text. Just return the rewritten text:',
           rewordPrompt: 'Reword the following text using different vocabulary while maintaining the same meaning. IMPORTANT: Return ONLY the reworded text. Preserve any existing dashes, hyphens, or symbols that are part of the original text, but do not add new quotes, dashes, explanations, or any other text. Just return the reworded text:',
           improvePrompt: 'Improve the following text by enhancing clarity, grammar, and flow. IMPORTANT: Return ONLY the improved text. Preserve any existing dashes, hyphens, or symbols that are part of the original text, but do not add new quotes, dashes, explanations, or any other text. Just return the improved text:',
-          summarizePrompt: 'Provide a concise summary of the following text. IMPORTANT: Return ONLY the summary. Preserve any existing dashes, hyphens, or symbols that are part of the original text, but do not add new quotes, dashes, explanations, or any other text. Just return the summary:'
+          summarizePrompt: 'Provide a concise summary of the following text. IMPORTANT: Return ONLY the summary. Preserve any existing dashes, hyphens, or symbols that are part of the original text, but do not add new quotes, dashes, explanations, or any other text. Just return the summary:',
+          kualiNotificationPrompt: 'You are an expert at creating professional email notifications for Kuali workflow systems. Based on the provided context and text, create a comprehensive email notification that includes separate fields for:\n\n1. **Subject Line**: A clear, concise subject that summarizes the notification\n2. **Greeting**: Professional greeting appropriate for the recipient\n3. **Main Message**: The core notification content in clear, professional language\n4. **Action Required**: What the recipient needs to do (if any)\n5. **Deadline**: When action is needed (if applicable)\n6. **Contact Information**: Who to contact for questions\n7. **Closing**: Professional closing statement\n\nFormat your response exactly as follows (replace the placeholder text with your content):\n\nSUBJECT: [Your subject line here]\nGREETING: [Your greeting here]\nMESSAGE: [Your main message here]\nACTION: [Action required here]\nDEADLINE: [Deadline here]\nCONTACT: [Contact info here]\nCLOSING: [Your closing here]\n\nContext: '
         });
         if (!config.apiKey) {
           showNotification('Set API key in extension options', 'error');
@@ -714,4 +738,264 @@ function openInPageActionMenu() {
     }
   };
   document.addEventListener('mousedown', onDocClick, true);
+}
+
+// Kuali-specific functions
+function injectKualiContextInput() {
+  // Look for "Step Label" or similar elements
+  const stepLabelElements = document.querySelectorAll('label, span, div');
+  let stepLabelElement = null;
+  
+  for (const element of stepLabelElements) {
+    if (element.textContent && element.textContent.toLowerCase().includes('step label')) {
+      stepLabelElement = element;
+      break;
+    }
+  }
+  
+  if (!stepLabelElement) {
+    console.log('Step Label element not found');
+    return;
+  }
+  
+  // Check if we already injected the input
+  if (document.getElementById('kuali-context-input')) {
+    return;
+  }
+  
+  // Create the context input field
+  const contextInput = document.createElement('div');
+  contextInput.id = 'kuali-context-input';
+  contextInput.style.cssText = `
+    margin-bottom: 15px;
+    padding: 10px;
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+  `;
+  
+  const label = document.createElement('label');
+  label.textContent = 'Email Notification Context:';
+  label.style.cssText = `
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 500;
+    color: #495057;
+  `;
+  
+  const textarea = document.createElement('textarea');
+  textarea.placeholder = 'Describe what you want the email notification to be about...';
+  textarea.style.cssText = `
+    width: 100%;
+    min-height: 80px;
+    padding: 8px;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    font-family: inherit;
+    font-size: 14px;
+    resize: vertical;
+  `;
+  
+  const generateBtn = document.createElement('button');
+  generateBtn.textContent = 'Generate Notification';
+  generateBtn.style.cssText = `
+    margin-top: 8px;
+    padding: 6px 12px;
+    background: #007bff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+  `;
+  generateBtn.onmouseenter = () => { generateBtn.style.background = '#0056b3'; };
+  generateBtn.onmouseleave = () => { generateBtn.style.background = '#007bff'; };
+  
+  generateBtn.onclick = async () => {
+    const context = textarea.value.trim();
+    if (!context) {
+      alert('Please provide context for the email notification');
+      return;
+    }
+    
+    try {
+      const config = await browser.storage.sync.get({
+        apiKey: '',
+        kualiNotificationPrompt: ''
+      });
+      
+      if (!config.apiKey) {
+        alert('Please set your Perplexity API key in the extension options');
+        return;
+      }
+      
+      // Generate the notification
+      const result = await processKualiNotification(context, config);
+      if (result) {
+        displayKualiNotificationResult(result);
+      }
+    } catch (error) {
+      console.error('Failed to generate notification:', error);
+      alert('Failed to generate notification: ' + error.message);
+    }
+  };
+  
+  contextInput.appendChild(label);
+  contextInput.appendChild(textarea);
+  contextInput.appendChild(generateBtn);
+  
+  // Insert the context input above the step label
+  stepLabelElement.parentNode.insertBefore(contextInput, stepLabelElement);
+}
+
+async function processKualiNotification(context, config) {
+  try {
+    const prompt = config.kualiNotificationPrompt + context;
+    
+    const requestBody = {
+      model: 'sonar',
+      messages: [
+        {
+          role: 'user',
+          content: prompt
+        }
+      ],
+      max_tokens: 1500,
+      temperature: 0.7
+    };
+    
+    const response = await fetch('https://api.perplexity.ai/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${config.apiKey}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(requestBody)
+    });
+    
+    if (!response.ok) {
+      throw new Error(`API request failed: ${response.status} ${response.statusText}`);
+    }
+    
+    const data = await response.json();
+    if (data.choices && data.choices[0] && data.choices[0].message) {
+      return data.choices[0].message.content.trim();
+    } else {
+      throw new Error('Invalid response from API');
+    }
+  } catch (error) {
+    console.error('Error processing Kuali notification:', error);
+    throw error;
+  }
+}
+
+function displayKualiNotificationResult(result) {
+  // Parse the result into separate fields
+  const fields = {};
+  const lines = result.split('\n');
+  
+  for (const line of lines) {
+    if (line.includes(':')) {
+      const [key, ...valueParts] = line.split(':');
+      const value = valueParts.join(':').trim();
+      if (value && value !== '[Your subject line here]' && value !== '[Your greeting here]' && 
+          value !== '[Your main message here]' && value !== '[Action required here]' && 
+          value !== '[Deadline here]' && value !== '[Contact info here]' && value !== '[Your closing here]') {
+        fields[key.trim()] = value;
+      }
+    }
+  }
+  
+  // Create a modal to display the results
+  const modal = document.createElement('div');
+  modal.id = 'kuali-notification-modal';
+  modal.style.cssText = `
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 2147483646;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  `;
+  
+  const modalContent = document.createElement('div');
+  modalContent.style.cssText = `
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    max-width: 600px;
+    max-height: 80vh;
+    overflow-y: auto;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  `;
+  
+  const title = document.createElement('h3');
+  title.textContent = 'Generated Email Notification';
+  title.style.cssText = `
+    margin: 0 0 20px 0;
+    color: #333;
+  `;
+  
+  const closeBtn = document.createElement('button');
+  closeBtn.textContent = '×';
+  closeBtn.style.cssText = `
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: #666;
+  `;
+  closeBtn.onclick = () => modal.remove();
+  
+  modalContent.appendChild(closeBtn);
+  modalContent.appendChild(title);
+  
+  // Display each field
+  Object.entries(fields).forEach(([key, value]) => {
+    const fieldDiv = document.createElement('div');
+    fieldDiv.style.cssText = `
+      margin-bottom: 15px;
+    `;
+    
+    const fieldLabel = document.createElement('label');
+    fieldLabel.textContent = key + ':';
+    fieldLabel.style.cssText = `
+      display: block;
+      font-weight: 500;
+      margin-bottom: 5px;
+      color: #495057;
+    `;
+    
+    const fieldValue = document.createElement('div');
+    fieldValue.textContent = value;
+    fieldValue.style.cssText = `
+      padding: 8px;
+      background: #f8f9fa;
+      border: 1px solid #dee2e6;
+      border-radius: 4px;
+      min-height: 20px;
+      white-space: pre-wrap;
+    `;
+    
+    fieldDiv.appendChild(fieldLabel);
+    fieldDiv.appendChild(fieldValue);
+    modalContent.appendChild(fieldDiv);
+  });
+  
+  modal.appendChild(modalContent);
+  document.body.appendChild(modal);
+  
+  // Close modal when clicking outside
+  modal.onclick = (e) => {
+    if (e.target === modal) {
+      modal.remove();
+    }
+  };
 }
